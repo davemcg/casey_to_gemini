@@ -28,14 +28,27 @@ for i in files:
 # loops through xlsx list, opens xlsx file to extract hgvs
 
 for i in xlsx:
+	# read first xlsx sheet into panda data structure (skipping the first 4 rows)
 	data = pandas.read_excel(i, sheetname=0, skiprows=4)
+	# merge chr and hgvs to create vep friendly hgvs
 	data['HGVS'] = data["Chromosome"].map(str) + ":" + data["HGVSGenomic"]
+	# change from pandas to python list
 	out = data['HGVS'].tolist()
 	# filter out non hgvs rows
 	out2 = [] 
 	for object in out:
 		if re.search('^\d+', str(object)):
 			out2.append(object)
+	#write to temp file
+	file = open('vep_temp.txt','w')
+	for i in out2:
+		file.write(i)
+		file.write(\n)
+	file.close()
+	######
+	# Run VEP
+	######
+	
 		
 """
 Run VEP with hgvs, output vcf
