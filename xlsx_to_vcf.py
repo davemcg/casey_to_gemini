@@ -1,28 +1,41 @@
 import pandas
 import math
-import sys
+import os
 
 """
-Read in xlsx file, extract hgvs, and ped info
+Read in xlsx file, extract hgvs, and build ped
 """
 
-x = pandas.read_excel("/Users/davidmcgaughey/Desktop/casey/15-3081 Victoria Sang Stargardt v3.2_Report-sign out.xlsx", sheetname=0,skiprows=4)
+# Will design right now to read all xlsx files in directory
+all_files = os.listdir()
+# only read in patient xlsx files and builds a ped file (doesn't do gender)
+xlsx = []
+ped = []
+ped.append('#Family SampleID PaternalID MaternalID Gender Phenotype Disease ClinicalID')
+for i in files:
+	if re.search('^\d+.*xlsx$',str(i)):
+		xlsx.append(i)
+		clinicalID = i.split()[0]	
+		fname = i.split()[1]		
+		lname = i.split()[2]
+		name = fname + "_" + lname
+		disease = i.split()[3]
+		if "_" in disease:
+			disease = disease.split("_")[0]
+		ped_line = name + " " + name + " 0 " + "0 " + "0 " + "1 " + disease + " " + clinicalID
+		ped.append(ped_line)
 
-#list(x.columns.values)
-#['#ID', 'Gene', 'Chromosome', 'ChromosomePosition', 'ExonNumber', 'HGVSGenomic', 'HGVSCoding', 'HGVSProtein', 'Zygosity', 'Coverage', 'Rs', 'CAF[RA]', 'ExAC_AF', 'Pathogenicity', 'Polyphen2_HDIV_pred', 'Polyphen2_HDIV_score', 'VariantComment', 'TimesObservedPerPanel', 'SamplesPerPanel', 'TimesObservedPerPanelGroup', 'SamplesPerPanelGroup', 'Panel', 'Unnamed: 22', 'Unnamed: 23', 'Unnamed: 24', 'Unnamed: 25']
+# loops through xlsx list, opens xlsx file to extract hgvs
 
-#x['HGVSGenomic']
-
-#y = x[['Chromosome','HGVSGenomic']]
-
-x['HGVS'] = x["Chromosome"].map(str) + ":" + x["HGVSGenomic"]
-
-out = x['HGVS'].tolist()
-
-out2 = [] 
-for object in out:
-	if re.search('^\d+', str(object)):
-		out2.append(object)
+for i in xlsx:
+	data = pandas.read_excel(i, sheetname=0, skiprows=4)
+	data['HGVS'] = data["Chromosome"].map(str) + ":" + data["HGVSGenomic"]
+	out = data['HGVS'].tolist()
+	# filter out non hgvs rows
+	out2 = [] 
+	for object in out:
+		if re.search('^\d+', str(object)):
+			out2.append(object)
 		
 """
 Run VEP with hgvs, output vcf
