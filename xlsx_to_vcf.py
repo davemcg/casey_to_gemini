@@ -1,14 +1,15 @@
 import pandas
 import math
 import os
+import subprocess
 
 """
-Read in xlsx file, extract hgvs, and build ped
+Reads in xlsx file, extract hgvs, and builds ped
 """
 
-# Will design right now to read all xlsx files in directory
+# Reads all files in directory
 all_files = os.listdir()
-# only read in patient xlsx files and builds a ped file (doesn't do gender)
+# only input patient xlsx files and builds a ped file (doesn't do gender)
 xlsx = []
 ped = []
 ped.append('#Family SampleID PaternalID MaternalID Gender Phenotype Disease ClinicalID')
@@ -43,12 +44,24 @@ for i in xlsx:
 	file = open('vep_temp.txt','w')
 	for i in out2:
 		file.write(i)
-		file.write(\n)
+		file.write('\n')
 	file.close()
 	######
 	# Run VEP
 	######
-	
+	vcf_name = 
+	vep_query = 'perl /Applications/variant_effect_predictor/perl variant_effect_predictor.pl \
+		-i temp.txt --vcf -o temp.vcf --species human --assembly GRCh37 \
+		--plugin Grantham \
+		--total_length \
+		--hgvs \
+		--sift b \
+    	--polyphen b \
+    	--symbol \
+		--numbers \
+		--biotype \
+		--fields Consequence,Codons,Amino_acids,Gene,SYMBOL,Feature,EXON,PolyPhen,SIFT,Protein_position,BIOTYPE,CANONICAL,Grantham,HGVSc,HGVSp \
+		--force_overwrite ' 
 		
 """
 Run VEP with hgvs, output vcf
