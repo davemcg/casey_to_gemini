@@ -2,6 +2,7 @@ import pandas
 import math
 import os
 import subprocess
+import re
 
 """
 Reads in xlsx file, extract hgvs, and builds ped
@@ -13,7 +14,7 @@ all_files = os.listdir()
 xlsx = []
 ped = []
 ped.append('#Family SampleID PaternalID MaternalID Gender Phenotype Disease ClinicalID')
-for i in files:
+for i in all_files:
 	if re.search('^\d+.*xlsx$',str(i)):
 		xlsx.append(i)
 		clinicalID = i.split()[0]	
@@ -26,42 +27,52 @@ for i in files:
 		ped_line = name + " " + name + " 0 " + "0 " + "0 " + "1 " + disease + " " + clinicalID
 		ped.append(ped_line)
 
-# loops through xlsx list, opens xlsx file to extract hgvs
 
+
+# loops through xlsx list, opens xlsx file to extract hgvs
 for i in xlsx:
 	# read first xlsx sheet into panda data structure (skipping the first 4 rows)
 	data = pandas.read_excel(i, sheetname=0, skiprows=4)
-	# merge chr and hgvs to create vep friendly hgvs
-	data['HGVS'] = data["Chromosome"].map(str) + ":" + data["HGVSGenomic"]
-	# change from pandas to python list
-	out = data['HGVS'].tolist()
-	# filter out non hgvs rows
-	out2 = [] 
-	for object in out:
-		if re.search('^\d+', str(object)):
-			out2.append(object)
+	#just keep gene and hgvs coding info
+	data = data[['Gene','HGVSCoding']]
+	# drop blanks
+	data = data.dropna()
+	# drop anything that doesn't have a HGVS in it
+	cond = ~data['HGVSCoding'].str.contains('NM')
+	data = data.drop(data[cond].index.values)
+	# extract hgvs and just pull out coding part
+	hgvs = data['HGVSCoding'].tolist()
+	hgvs = [x.split(':')[1] for x in hgvs]
+	# reprint with gene name
+	data['HGVS'] = data["Gene"].map(str) + ":" + hgvs
+	
 	#write to temp file
 	file = open('vep_temp.txt','w')
-	for i in out2:
+	for i in data['HGVS']:
 		file.write(i)
 		file.write('\n')
 	file.close()
 	######
 	# Run VEP
 	######
-	vcf_name = 
-	vep_query = 'perl /Applications/variant_effect_predictor/perl variant_effect_predictor.pl \
-		-i temp.txt --vcf -o temp.vcf --species human --assembly GRCh37 \
-		--plugin Grantham \
-		--total_length \
-		--hgvs \
-		--sift b \
-    	--polyphen b \
-    	--symbol \
-		--numbers \
-		--biotype \
-		--fields Consequence,Codons,Amino_acids,Gene,SYMBOL,Feature,EXON,PolyPhen,SIFT,Protein_position,BIOTYPE,CANONICAL,Grantham,HGVSc,HGVSp \
-		--force_overwrite ' 
+	clinicalID = i.split()[0]
+	vcf_name = clinicalID + '.vcf '
+	vep_query = 'perl /Applications/variant_effect_predictor/perl variant_effect_predictor.pl ' + \
+		'-i vep_temp.txt ' + \
+		'--vcf -o ' + vcf_name + \
+		'--species human --assembly GRCh37 ' + \
+		'--plugin Grantham ' + \
+		'--total_length ' + \
+		'--hgvs ' + \
+		'--sift b ' + \
+    	'--polyphen b ' + \
+    	'--symbol ' + \
+		'--numbers ' + \
+		'--biotype ' + \
+		'--fields Consequence,Codons,Amino_acids,Gene,SYMBOL,Feature,EXON,PolyPhen,SIFT,Protein_position,BIOTYPE,CANONICAL,Grantham,HGVSc,HGVSp ' + \
+		'--force_overwrite' 
+
+
 		
 """
 Run VEP with hgvs, output vcf
