@@ -6,10 +6,11 @@ import os
 import subprocess
 import re
 from datetime import datetime
+from collections import defaultdict
 
-"""
-Reads in xlsx file, extract hgvs, and builds ped
-"""
+##########################################################################################
+#Reads in xlsx file, extract hgvs, and writes ped file
+##########################################################################################
 
 # Reads all files in directory
 all_files = os.listdir()
@@ -18,27 +19,42 @@ xlsx = []
 ped = []
 ped.append('#Family SampleID PaternalID MaternalID Gender Phenotype Disease ClinicalID')
 
-all_clinicalIDs = []
+#build list of all samples for use through script
+all_names = []
 for i in all_files:
+	# ID file names that start with a digit and end in xlsx
 	if re.search('^\d+.*xlsx$',str(i)):
 		xlsx.append(i)
 		clinicalID = i.split()[0]
-		all_clinicalIDs.append(clinicalID)	
+		# extract first and last name from file name
 		fname = i.split()[1]		
 		lname = i.split()[2]
-		name = fname + "_" + lname
+		name = fname + '_' + lname
+		all_names.append(name)
+		# and pull disease from file name
 		disease = i.split()[3]
-		if "_" in disease:
-			disease = disease.split("_")[0]
-		ped_line = name + " " + name + " 0 " + "0 " + "0 " + "1 " + disease + " " + clinicalID
+		# clean up a formatting thing where some diseases are appended with "_"
+		if '_' in disease:
+			disease = disease.split('_')[0]
+		ped_line = name + ' ' + name + ' 0 ' + '0 ' + '0 ' + '1 ' + disease + ' ' + clinicalID
 		ped.append(ped_line)
 
+print('\n\n' + ','.join(all_names) + ' sample HGVS extracted and ped built\n')
 
+file = open('casey.ped', 'w')
+for line in ped:
+	file.write(line)
+	file.write('\n')
+
+file.close()
+print('casey.ped written\n')
+
+##########################################################################################
+# Builds sample dictionary with hgvs, clinicalID, and allele status
+##########################################################################################
 
 # loops through xlsx list, opens xlsx file to extract hgvs, builds dictionary of 
 # hgvs as key and clinicalID_Zygosity as value
-
-
 hgvs_dict = defaultdict(dict)
 for i in xlsx:
 	# read first xlsx sheet into panda data structure (skipping the first 4 rows)
@@ -55,10 +71,12 @@ for i in xlsx:
 	
 	
 	# build defaultdictionary
-	clinicalID = i.split()[0]
+	fname = i.split()[1]		
+	lname = i.split()[2]
+	name = fname + "_" + lname
 	for index,row in data.iterrows():
 		key = row['HGVS']
-		hgvs_dict[key][clinicalID] = row['Zygosity']
+		hgvs_dict[key][name] = row['Zygosity']
 	
 # print hgvs to file for vep
 file=open("vep_hgvs_input.txt",'w')
@@ -69,9 +87,11 @@ for k,v in hgvs_dict.items():
 file.close()
 	
 	
-######
-# Run VEP. By default it left aligns the vcf
-######
+##########################################################################################
+# Run online VEP. By default it left aligns the vcf(?)
+##########################################################################################
+
+# will output vcf from the hgvs
 vep_query = 'perl /Applications/variant_effect_predictor/variant_effect_predictor.pl ' + \
 		'-i vep_hgvs_input.txt ' + \
 		'--vcf -o ' + 'vep_output.vcf ' + \
@@ -97,8 +117,9 @@ vcf = open('vep_output.vcf','r')
 vcf = vcf.readlines()
 
 
-
+##########################################################################################
 # rewrite vcf with sample genotypes
+##########################################################################################
 
 # new header lines
 new_header = \
@@ -134,10 +155,11 @@ new_header = \
 ##contig=<ID=chrY,length=59373566,assembly=hg19>\n'
 
 
+# sort all sampleIDs, just in case
+all_names.sort()
+
+# rolling through each line in vcf now to reformat and print to file
 file = open('gemini.casey.vcf','w')
-all_clinicalIDs.sort()
-
-
 for line in vcf:
 	# reprint header
 	if line[0:2] == '##':
@@ -147,9 +169,10 @@ for line in vcf:
 		file.write(new_header)
 		line = line.split()
 		line.append("FORMAT")
-		line = line + all_clinicalIDs
+		line = line + all_names
 		file.write('\t'.join(line))
 		file.write('\n')
+	# now out of header. Now hacking vcf with sample genotypes and fake AD:DP:PL (see below)
 	else:
 		line = line.split()
 		# hacking conversion from ensembl chr to ucsc chr
@@ -158,7 +181,7 @@ for line in vcf:
 		line.append("GT:AD:DP:PL")
 		# pull genotypes at the position by running HGVS through dict
 		genotypes = hgvs_dict[line[2]]
-		for sample in all_clinicalIDs:
+		for sample in all_names:
 			if sample not in genotypes:
 				# fake AD:DP:PL numbers to appease Gemini
 				line.append("0/0:666:666:666")
@@ -179,13 +202,14 @@ for line in vcf:
 
 file.close()			
 
-#gemini db creation
+##########################################################################################
+# gemini db creation
+##########################################################################################
+# attaching current date and time to db for rudimentary version control
 db_name = "casey.gemini." + datetime.now().strftime('%Y-%m-%d__%H:%M:%S') + ".db"
-gemini_query = "gemini load --cores 4 -t VEP -v gemini.casey.vcf " + db_name
+gemini_query = "gemini load --cores 4 -t VEP -v gemini.casey.vcf -p casey.ped " + db_name
 
-"""
-Create gemini db, use ped
-"""
+os.system(gemini_query)
 		
 
 
