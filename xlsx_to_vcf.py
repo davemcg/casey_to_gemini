@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3
+
 import pandas
 import math
 import os
@@ -29,13 +31,16 @@ for i in all_files:
 
 
 
-# loops through xlsx list, opens xlsx file to extract hgvs
+# loops through xlsx list, opens xlsx file to extract hgvs, builds dictionary of 
+# hgvs as key and clinicalID_Zygosity as value
+
+hgvs_dict = {}
 for i in xlsx:
 	# read first xlsx sheet into panda data structure (skipping the first 4 rows)
 	data = pandas.read_excel(i, sheetname=0, skiprows=4)
 	#just keep gene and hgvs coding info
-	data = data[['Chromosome','HGVSGenomic']]
-	# drop blanks
+	data = data[['Chromosome','HGVSGenomic','Zygosity']]
+	# drop blanks (in any column)
 	data = data.dropna()
 	# drop anything that doesn't have a HGVS in it
 	cond = ~data['HGVSGenomic'].str.contains('g.')
@@ -43,21 +48,37 @@ for i in xlsx:
 	# reprint with gene name
 	data['HGVS'] = data["Chromosome"].map(str) + ":" + data['HGVSGenomic']
 	
-	#write to temp file
-	file = open('vep_temp.txt','w')
-	for i in data['HGVS']:
-		file.write(i)
-		file.write('\n')
-	file.close()
-	######
-	# Run VEP
-	######
+	
+	# build dictionary
 	clinicalID = i.split()[0]
-	vcf_name = clinicalID + '.vcf '
-	vep_query = 'perl /Applications/variant_effect_predictor/perl variant_effect_predictor.pl ' + \
-		'-i vep_temp.txt ' + \
-		'--vcf -o ' + vcf_name + \
-		'--species human --assembly GRCh37 ' + \
+	for index,row in data.iterrows():
+		key = row['HGVS']
+		if key in hgvs_dict:
+			old_values = hgvs_dict[key]
+			new_values = clinicalID + "_" + row['Zygosity']
+			new_values = old_values + "," + new_values
+			hgvs_dict[key] = new_values
+			
+		else:
+			hgvs_dict[key] = clinicalID + "_" + row['Zygosity']
+	
+# print hgvs to file for vep
+file=open("vep_hgvs_input.txt",'w')
+for k,v in hgvs_dict.items():
+	file.write(k)
+	file.write('\n')
+
+file.close()
+	
+	
+######
+# Run VEP. By default it left aligns the vcf
+######
+vep_query = 'perl /Applications/variant_effect_predictor/variant_effect_predictor.pl ' + \
+		'-i vep_hgvs_input.txt ' + \
+		'--vcf -o ' + 'vep_output.vcf ' + \
+		'--assembly GRCh37 ' + \
+		'--database' + ' --port 3337 ' + \
 		'--plugin Grantham ' + \
 		'--total_length ' + \
 		'--hgvs ' + \
@@ -69,6 +90,21 @@ for i in xlsx:
 		'--fields Consequence,Codons,Amino_acids,Gene,SYMBOL,Feature,EXON,PolyPhen,SIFT,Protein_position,BIOTYPE,CANONICAL,Grantham,HGVSc,HGVSp ' + \
 		'--force_overwrite' 
 
+print("Running VEP online. Expect to wait ~10 minutes")
+os.system(vep_query)
+print("VEP query done!")
+
+# import in vep output
+vcf = open('vep_output.vcf','r')
+vcf = vcf.readlines()
+# rewrite vcf with sample genotypes
+file = open('gemini.casey.vcf','w')
+for line in vcf:
+	if line[0:2] == '##':
+		print(line[:-1])
+	elif line[0:2] == '#C':
+		
+	
 
 		
 """
