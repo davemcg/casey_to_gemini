@@ -34,17 +34,14 @@ for i in xlsx:
 	# read first xlsx sheet into panda data structure (skipping the first 4 rows)
 	data = pandas.read_excel(i, sheetname=0, skiprows=4)
 	#just keep gene and hgvs coding info
-	data = data[['Gene','HGVSCoding']]
+	data = data[['Chromosome','HGVSGenomic']]
 	# drop blanks
 	data = data.dropna()
 	# drop anything that doesn't have a HGVS in it
-	cond = ~data['HGVSCoding'].str.contains('NM')
+	cond = ~data['HGVSGenomic'].str.contains('g.')
 	data = data.drop(data[cond].index.values)
-	# extract hgvs and just pull out coding part
-	hgvs = data['HGVSCoding'].tolist()
-	hgvs = [x.split(':')[1] for x in hgvs]
 	# reprint with gene name
-	data['HGVS'] = data["Gene"].map(str) + ":" + hgvs
+	data['HGVS'] = data["Chromosome"].map(str) + ":" + data['HGVSGenomic']
 	
 	#write to temp file
 	file = open('vep_temp.txt','w')
