@@ -112,14 +112,14 @@ print("Running VEP online. Expect to wait ~10 minutes")
 os.system(vep_query)
 print("VEP query done!")
 
-# import in vep output
-vcf = open('vep_output.vcf','r')
-vcf = vcf.readlines()
-
 
 ##########################################################################################
 # rewrite vcf with sample genotypes
 ##########################################################################################
+
+# import in vep output
+vcf = open('vep_output.vcf','r')
+vcf = vcf.readlines()
 
 # new header lines
 new_header = \
@@ -184,7 +184,7 @@ for line in vcf:
 		for sample in all_names:
 			if sample not in genotypes:
 				# fake AD:DP:PL numbers to appease Gemini
-				line.append("0/0:666:666:666")
+				line.append("./.:666:666:666")
 			else:
 				# casey uses some version of "heterozygote" to mark hets for an allele
 				if 'het' in hgvs_dict[line[2]][sample].lower():
