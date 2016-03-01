@@ -106,6 +106,10 @@ file.close()
 ##########################################################################################
 os.system('~/git/casey_to_gemini/./hgvsC_to_vcf-like.py hgvs_input.txt')
 converter = open('converter.txt')
+for line in converter:
+	line = line.split()
+	values = hgvs_dict[line[0]]
+	hgvs_dict[line[1]] = values
 
 ##########################################################################################
 # Run online VEP. By default it left aligns the vcf(?)
