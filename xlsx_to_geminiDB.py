@@ -80,9 +80,13 @@ for i in xlsx:
 		key = row['HGVSCoding']
 		key1, key2 = key.split(':')
 		key1 = key1.split('.')[0]
+		# warn about the occasional missing (MT?)
 		if key1 == ' ' or key1 == '':
 			print(i, key1, key2, "Missing gene!!!!!!\n\nNot being entered into db!!!!!")
 			continue
+		if key1 == 'NM_000114':
+			# NM_000114 is gone now. Replacing with below
+			key1 = NM_207034
 		key = key1 + ':' + key2
 		panels.append(row['Panel'])
 		hgvs_dict[key][name] = row['Zygosity'] + '_' +  str(row['TimesObservedPerPanel']) + '_' + row['Panel']
