@@ -105,7 +105,7 @@ file.close()
 # Convert to VEP friendly format and re-do hgvs_dict with chr_pos_ref_alt as key
 ##########################################################################################
 os.system('~/git/casey_to_gemini/./hgvsC_to_vcf-like.py hgvs_input.txt')
-
+converter = open('converter.txt')
 
 ##########################################################################################
 # Run online VEP. By default it left aligns the vcf(?)
@@ -132,9 +132,6 @@ print("Running VEP online. Expect to wait ~10 minutes")
 os.system(vep_query)
 print("VEP query done!")
 
-
-##########################################################################################
-# add conversion info from hgvsC_to_vcf-like.py into 
 
 
 

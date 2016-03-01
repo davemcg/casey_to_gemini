@@ -25,7 +25,7 @@ for line in open(input):
 	chrom = chrom[3:]
 	out = str(chrom) + ' ' + str(offset) + ' . ' + ref + ' ' + alt
 	f.write(out)
-	out2 = line[:-1] + '\t' + str(chrom) + '_' + str(offset) + '_' + ref + '_' + alt
+	out2 = line[:-1] + '\t' + str(chrom) + '_' + str(offset) + '_' + ref + '_' + alt + '\n'
 	c.write(out2)
 f.close()
 c.close()
