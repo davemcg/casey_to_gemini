@@ -60,33 +60,33 @@ for i in xlsx:
 	# read first xlsx sheet into panda data structure (skipping the first 4 rows)
 	data = pandas.read_excel(i, sheetname=0, skiprows=4)
 	#just keep gene and hgvs coding info
-	data = data[['Chromosome','HGVSGenomic','Zygosity']]
+	data = data[['Chromosome','HGVSCoding','Zygosity','TimesObservedPerPanel','Panel']]
 	# drop blanks (in any column)
 	data = data.dropna()
 	# drop anything that doesn't have a HGVS in it
-	cond = ~data['HGVSGenomic'].str.contains('g.')
+	cond = ~data['HGVSCoding'].str.contains('c.')
 	data = data.drop(data[cond].index.values)
-	# reprint with gene name
-	data['HGVS'] = data["Chromosome"].map(str) + ":" + data['HGVSGenomic']
-	
-	
 	# build defaultdictionary
 	fname = i.split()[1]		
 	lname = i.split()[2]
 	name = fname + "_" + lname
 	for index,row in data.iterrows():
-		key = row['HGVS']
-		hgvs_dict[key][name] = row['Zygosity']
+		key = row['HGVSCoding'].split('.')[0]
+		hgvs_dict[key][name] = row['Zygosity','TimesObservedPerPanel','Panel']
 	
-# print hgvs to file for vep
-file=open("vep_hgvs_input.txt",'w')
+# print hgvs to file for counsyl hvgs (hgvsC_to_vcf-like.py)
+file=open("hgvs_input.txt",'w')
 for k,v in hgvs_dict.items():
 	file.write(k)
 	file.write('\n')
 
 file.close()
-	
-	
+##########################################################################################
+# Convert to VEP friendly format
+##########################################################################################
+os.system('./hgvsC_to_vcf-like.py hgvs_input.txt')
+
+
 ##########################################################################################
 # Run online VEP. By default it left aligns the vcf(?)
 ##########################################################################################
