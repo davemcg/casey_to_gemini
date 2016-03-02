@@ -2,8 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-
-.swp
-.ped
-.txt
+*.swp
+*.ped
+*.txt
 
