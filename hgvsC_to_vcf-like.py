@@ -21,9 +21,10 @@ def get_transcript(name):
 c = open('converter.txt','w')
 f = open('vep_hgvs_input.txt','w')
 for line in open(input):
+	print(line)
 	chrom, offset, ref, alt = hgvs.parse_hgvs_name(line, genome, get_transcript=get_transcript)
 	chrom = chrom[3:]
-	out = str(chrom) + ' ' + str(offset) + ' . ' + ref + ' ' + alt
+	out = str(chrom) + ' ' + str(offset) + ' . ' + ref + ' ' + alt + '\n'
 	f.write(out)
 	out2 = line[:-1] + '\t' + str(chrom) + '_' + str(offset) + '_' + ref + '_' + alt + '\n'
 	c.write(out2)
