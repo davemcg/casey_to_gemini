@@ -78,6 +78,7 @@ for i in xlsx:
 	name = fname + "_" + lname
 	for index,row in data.iterrows():
 		key = row['HGVSCoding']
+		print(i,key)
 		key1, key2 = key.split(':')
 		key1 = key1.split('.')[0]
 		# warn about the occasional missing (MT?)
@@ -122,7 +123,7 @@ vep_query = 'perl /Applications/variant_effect_predictor/variant_effect_predicto
 		'-i vep_hgvs_input.txt ' + \
 		'--vcf -o ' + 'vep_output.vcf ' + \
 		'--assembly GRCh37 ' + \
-		'--database' + ' --port 3337 ' + \
+		'--offline ' + \
 		'--plugin Grantham ' + \
 		'--total_length ' + \
 		'--hgvs ' + \
