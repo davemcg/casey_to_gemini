@@ -78,7 +78,7 @@ for i in xlsx:
 	name = fname + "_" + lname
 	for index,row in data.iterrows():
 		key = row['HGVSCoding']
-		print(i,key)
+#		print(i,key)
 		key1, key2 = key.split(':')
 		key1 = key1.split('.')[0]
 		# warn about the occasional missing (MT?)
@@ -217,14 +217,15 @@ for line in vcf:
 		genotypes = hgvs_dict[vcf_key]
 		for sample in all_names:
 			if sample not in genotypes:
+				
 				# fake AD:DP:PL numbers to appease Gemini
 				line.append("./.:666:666:666")
 			else:
 				# casey uses some version of "heterozygote" to mark hets for an allele
-				if 'het' in hgvs_dict[line[2]][sample].lower():
+				if 'het' in hgvs_dict[vcf_key][sample].split('_')[0].lower():
 					line.append("0/1:666,666:666:666")
 				# similar, homozygous for hom for alt allele
-				elif 'hom' in hgvs_dict[line[2]][sample].lower():
+				elif 'hom' in hgvs_dict[vcf_key][sample].split('_')[0].lower():
 					line.append("1/1:666:666:666")
 				# possible something weird might slip in. Kill script and alert user.
 				else:
