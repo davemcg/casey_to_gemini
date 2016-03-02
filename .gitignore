@@ -6,3 +6,5 @@
 *.ped
 *.txt
 
+
+.xlsx_to_geminiDB.py.swp
