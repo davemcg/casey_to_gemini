@@ -86,7 +86,9 @@ for i in xlsx:
 			continue
 		if key1 == 'NM_000114':
 			# NM_000114 is gone now. Replacing with below
-			key1 = NM_207034
+			key1 = 'NM_207034'
+		if key1 == 'XM_005273027':
+			key1 = 'NM_001301365'
 		key = key1 + ':' + key2
 		panels.append(row['Panel'])
 		hgvs_dict[key][name] = row['Zygosity'] + '_' +  str(row['TimesObservedPerPanel']) + '_' + row['Panel']
@@ -208,8 +210,10 @@ for line in vcf:
 		line[0] = "chr" + line[0]
 		# Faking AD:DP:PL (see below)
 		line.append("GT:AD:DP:PL")
+		# build vcf_key from vcf info
+		vcf_key = line[0] + '_' + line[1] + '_' + line[3] + '_' + line[4]
 		# pull genotypes at the position by running HGVS through dict
-		genotypes = hgvs_dict[line[2]]
+		genotypes = hgvs_dict[vcf_key]
 		for sample in all_names:
 			if sample not in genotypes:
 				# fake AD:DP:PL numbers to appease Gemini
@@ -223,7 +227,7 @@ for line in vcf:
 					line.append("1/1:666:666:666")
 				# possible something weird might slip in. Kill script and alert user.
 				else:
-					print('Error, what is: ', hgvs_dict[line[2]][sample].lower())
+					print('Error, what is: ', hgvs_dict[vcf_key][sample].lower())
 					print('\n\nKILL KILL KILL\n\n')
 					break
 		file.write('\t'.join(line))
