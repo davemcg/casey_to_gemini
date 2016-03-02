@@ -54,9 +54,11 @@ print('casey.ped written\n')
 ##########################################################################################
 
 # loops through xlsx list, opens xlsx file to extract hgvs, builds dictionary of 
-# hgvs as key and clinicalID_Zygosity as value
+# hgvs and subjet name as keys 
 panels = []
-hgvs_dict = defaultdict(dict)
+position_zygosity_dict = defaultdict(dict)
+position_panel_dict = defaultdict(dict)
+sample_panel_dict = defaultdict(dict)
 for i in xlsx:
 	# check to find how many rows to skip
 	check = pandas.read_excel(i,sheetname=0)
@@ -92,27 +94,43 @@ for i in xlsx:
 			key1 = 'NM_001301365'
 		key = key1 + ':' + key2
 		panels.append(row['Panel'])
-		hgvs_dict[key][name] = row['Zygosity'] + '_' +  str(row['TimesObservedPerPanel']) + '_' + row['Panel']
+		position_zygosity_dict[key][name] = row['Zygosity']
+		if key not in position_panel_dict:	
+			position_panel_dict[key] = row['Panel']
+		if key in position_panel_dict:
+			value = list(position_panel_dict[key])
+			value.append(row['Panel'])
+		if name not in sample_panel_dict:
+			sample_panel_dict[name] = row['Panel']
+		if name in sample_panel_dict:
+			value = list(sample_panel_dict[name])
+			value.append(row['Panel'])
+			value = set(value)
 
 
 print("\n\nHere are the panels used across the files: ", set(panels), "\n\n")
 
 # print hgvs to file for counsyl hvgs (hgvsC_to_vcf-like.py)
 file=open("hgvs_input.txt",'w')
-for k,v in hgvs_dict.items():
+for k,v in position_zygosity_dict.items():
 	file.write(k)
 	file.write('\n')
 
 file.close()
 ##########################################################################################
-# Convert to VEP friendly format and re-do hgvs_dict with chr_pos_ref_alt as key
+# Convert to VEP friendly format and re-do position_zygosity_dict with chr_pos_ref_alt as key
 ##########################################################################################
 os.system('~/git/casey_to_gemini/./hgvsC_to_vcf-like.py hgvs_input.txt')
 converter = open('converter.txt')
 for line in converter:
 	line = line.split()
-	values = hgvs_dict[line[0]]
-	hgvs_dict[line[1]] = values
+	# update position_zygosity_dict
+	values = position_zygosity_dict[line[0]]
+	new_key = 'chr' + line[1]
+	position_zygosity_dict[new_key] = values
+	# update position_panel_dict
+	panel_values = position_panel_dict[line[0]]
+	position_panel_dict[new_key] = panel_values
 
 ##########################################################################################
 # Run online VEP. By default it left aligns the vcf(?)
@@ -143,7 +161,7 @@ print("VEP query done!")
 
 
 ##########################################################################################
-# rewrite vcf with sample genotypes
+# rewrit e vcf with sample genotypes
 ##########################################################################################
 
 # import in vep output
@@ -214,22 +232,30 @@ for line in vcf:
 		# build vcf_key from vcf info
 		vcf_key = line[0] + '_' + line[1] + '_' + line[3] + '_' + line[4]
 		# pull genotypes at the position by running HGVS through dict
-		genotypes = hgvs_dict[vcf_key]
+		genotypes = position_zygosity_dict[vcf_key]
 		for sample in all_names:
 			if sample not in genotypes:
-				
-				# fake AD:DP:PL numbers to appease Gemini
-				line.append("./.:666:666:666")
+				# begin the craziness. Need to call a db to check:
+				# 1. what panel is used on this sample/subject?
+				# 2. is this position covered on the panel?
+				# if 2 is true, then mark position as 0/0 (hom_ref)
+				# otherwise mark at unknown (./.)
+				if sample_panel_dict[sample] == position_panel_dict[vcf_key]:
+					line.append("0/0:666:666:666")
+				else:
+					# fake AD:DP:PL numbers to appease Gemini
+					line.append("./.:666:666:666")
 			else:
 				# casey uses some version of "heterozygote" to mark hets for an allele
-				if 'het' in hgvs_dict[vcf_key][sample].split('_')[0].lower():
+				if 'het' in position_zygosity_dict[vcf_key][sample].lower():
 					line.append("0/1:666,666:666:666")
 				# similar, homozygous for hom for alt allele
-				elif 'hom' in hgvs_dict[vcf_key][sample].split('_')[0].lower():
+				elif 'hom' in position_zygosity_dict[vcf_key][sample].lower():
 					line.append("1/1:666:666:666")
 				# possible something weird might slip in. Kill script and alert user.
 				else:
-					print('Error, what is: ', hgvs_dict[vcf_key][sample].lower())
+					line.append('./.:000:000:000')
+					print('Error, what is: ', sample, position_zygosity_dict[vcf_key][sample].lower())
 					print('\n\nKILL KILL KILL\n\n')
 					break
 		file.write('\t'.join(line))
