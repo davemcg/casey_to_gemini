@@ -17,7 +17,7 @@ all_files = os.listdir()
 # only input patient xlsx files and builds a ped file (doesn't do gender)
 xlsx = []
 ped = []
-ped.append('#Family SampleID PaternalID MaternalID Gender Phenotype Disease ClinicalID')
+ped.append('#Family SampleID PaternalID MaternalID Gender Phenotype ClinicalID')
 
 #build list of all samples for use through script
 all_names = []
@@ -25,6 +25,7 @@ for i in all_files:
 	# ID file names that start with a digit and end in xlsx
 	if re.search('^\d+.*xlsx$',str(i)):
 		xlsx.append(i)
+		i = i.replace('_',' ')
 		clinicalID = i.split()[0]
 		# extract first and last name from file name
 		fname = i.split()[1]		
@@ -32,11 +33,11 @@ for i in all_files:
 		name = fname + '_' + lname
 		all_names.append(name)
 		# and pull disease from file name
-		disease = i.split()[3]
+		# disease = i.split()[3] #NOPE TOO SKETCHY. FILENAMING INCONSISTENT.
 		# clean up a formatting thing where some diseases are appended with "_"
-		if '_' in disease:
-			disease = disease.split('_')[0]
-		ped_line = name + ' ' + name + ' 0 ' + '0 ' + '0 ' + '1 ' + disease + ' ' + clinicalID
+		#if '_' in disease:
+		#	disease = disease.split('_')[0]
+		ped_line = name + ' ' + name + ' 0 ' + '0 ' + '0 ' + '1 ' + clinicalID
 		ped.append(ped_line)
 
 print('\n\n' + ','.join(all_names) + ' sample HGVS extracted and ped built\n')
@@ -84,6 +85,7 @@ for i in xlsx:
 		key = row['HGVSCoding']
 		if ':' not in key:
 			print(key, "something wrong???")
+			sys.exit(0)
 		key1, key2 = key.split(':')
 		key1 = key1.split('.')[0]
 		# warn about the occasional missing (MT?)
