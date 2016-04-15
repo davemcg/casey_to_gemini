@@ -7,6 +7,7 @@ import subprocess
 import re
 from datetime import datetime
 from collections import defaultdict
+import sys
 
 ##########################################################################################
 #Reads in xlsx file, extract hgvs, and writes ped file
@@ -63,15 +64,24 @@ position_zygosity_dict = defaultdict(dict)
 position_panel_dict = defaultdict(dict)
 sample_panel_dict = defaultdict(dict)
 for i in xlsx:
-	# check to find how many rows to skip
+	print('Rolling through ' + i + ' now')
+	## check to find how many rows to skip and grab panel info 
 	check = pandas.read_excel(i,sheetname=0)
 	# pull first column and convert to list, then check for row with #ID (header row)
 	first_column = list(check[check.columns[0]])
 	index = first_column.index('#ID') + 1
+	# the index happens to be position of the Sample and panel info cell
+	panel = first_column[index-2]
+	print(panel)
 	# read first xlsx sheet into panda data structure 
 	data = pandas.read_excel(i, sheetname=0, skiprows=index)
-	#just keep select info
-	data = data[['HGVSCoding','Zygosity','TimesObservedPerPanel','Panel']]
+	#just keep select info, depending on what kind of sheet I get
+	if data[['Transcript']]: # early sheets have transcript and hgvs in separate columns
+		data = data[['Transcript','HGVSCoding','Zygosity','TimesObservedPerPanel']]
+		# merge back together
+		data['HGVSCoding'] = data['Transcript'].map(str) + ':' + data['HGVSCoding']
+	else:
+		data = data[['HGVSCoding','Zygosity','TimesObservedPerPanel']]
 	# drop blanks (in any column)
 	data = data.dropna()
 	# drop anything that doesn't have a HGVS in it
