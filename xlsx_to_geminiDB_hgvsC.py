@@ -71,15 +71,29 @@ for i in xlsx:
 	first_column = list(check[check.columns[0]])
 	index = first_column.index('#ID') + 1
 	# the index happens to be position of the Sample and panel info cell
-	panel = first_column[index-2]
+	panel_index = [i for i,val in enumerate(first_column) if str(val).startswith("##Variant")][0]
+	panel = first_column[panel_index]
+	panel = re.search("(?<=\d\d\d[-|\s+]).*\'", panel).group(0)
+	panel = panel.replace('\'','')
+	panel = panel.replace('-','_')
+	panel = panel.replace(' ','_')
 	print(panel)
 	# read first xlsx sheet into panda data structure 
 	data = pandas.read_excel(i, sheetname=0, skiprows=index)
 	#just keep select info, depending on what kind of sheet I get
-	if data[['Transcript']]: # early sheets have transcript and hgvs in separate columns
+	if 'Zygosity' not in data:
+		print('Zygosity Information missing from ' + i)
+		# move xlsx to problem_xlsx_files
+		if not os.path.isdir("problem_xlsx_files"):
+			mkdir_call = "mkdir problem_xlsx_files"
+			subprocess.check_call(mkdir_call,shell=True)
+		mv_call = 'mv ' + '\"' + i + '\"' + ' problem_xlsx_files/'
+		subprocess.check_call(mv_call,shell=True)
+		continue
+	if 'Transcript' in data: # early sheets have transcript and hgvs in separate columns
 		data = data[['Transcript','HGVSCoding','Zygosity','TimesObservedPerPanel']]
 		# merge back together
-		data['HGVSCoding'] = data['Transcript'].map(str) + ':' + data['HGVSCoding']
+		data['HGVSCoding'] = str(data['Transcript'].map(str)) + ':' + str(data['HGVSCoding'])
 	else:
 		data = data[['HGVSCoding','Zygosity','TimesObservedPerPanel']]
 	# drop blanks (in any column)
@@ -93,6 +107,8 @@ for i in xlsx:
 	name = fname + "_" + lname
 	for index,row in data.iterrows():
 		key = row['HGVSCoding']
+		if 'M_' not in key[0:3]:
+			continue
 		if ':' not in key:
 			print(key, "something wrong???")
 			sys.exit(0)
@@ -108,18 +124,18 @@ for i in xlsx:
 		if key1 == 'XM_005273027':
 			key1 = 'NM_001301365'
 		key = key1 + ':' + key2
-		panels.append(row['Panel'])
+		panels.append(panel)
 		position_zygosity_dict[key][name] = row['Zygosity']
 		if key not in position_panel_dict:	
-			position_panel_dict[key] = row['Panel']
+			position_panel_dict[key] = panel
 		if key in position_panel_dict:
 			value = list(position_panel_dict[key])
-			value.append(row['Panel'])
+			value.append(panel)
 		if name not in sample_panel_dict:
-			sample_panel_dict[name] = row['Panel']
+			sample_panel_dict[name] = panel
 		if name in sample_panel_dict:
 			value = list(sample_panel_dict[name])
-			value.append(row['Panel'])
+			value.append(panel)
 			value = set(value)
 
 
@@ -171,8 +187,8 @@ vep_query = 'perl /Applications/variant_effect_predictor/variant_effect_predicto
 		'--fields Consequence,Codons,Amino_acids,Gene,SYMBOL,Feature,EXON,PolyPhen,SIFT,Protein_position,BIOTYPE,CANONICAL,Grantham,HGVSc,HGVSp ' + \
 		'--force_overwrite' 
 
-print("Running VEP online. Expect to wait ~10 minutes")
-os.system(vep_query)
+print("Running VEP. Expect to wait ~10 minutes")
+subprocess.check_call(vep_query,shell=True)
 print("VEP query done!")
 
 ##########################################################################################
@@ -266,7 +282,7 @@ for line in vcf:
 				# similar, homozygous for hom for alt allele
 				elif 'hom' in position_zygosity_dict[vcf_key][sample].lower():
 					line.append("1/1:666:666:666")
-				# possible something weird might slip in. Kill script and alert user.
+				# possible something weird might slip in. Alert user.
 				else:
 					line.append('./.:000:000:000')
 					print('Error, what is: ', sample, position_zygosity_dict[vcf_key][sample].lower())
