@@ -64,7 +64,7 @@ position_zygosity_dict = defaultdict(dict)
 position_panel_dict = defaultdict(dict)
 sample_panel_dict = defaultdict(dict)
 for i in xlsx:
-	print('Rolling through ' + i + ' now')
+#	print('Rolling through ' + i + ' now')
 	## check to find how many rows to skip and grab panel info 
 	check = pandas.read_excel(i,sheetname=0)
 	# pull first column and convert to list, then check for row with #ID (header row)
@@ -77,7 +77,7 @@ for i in xlsx:
 	panel = panel.replace('\'','')
 	panel = panel.replace('-','_')
 	panel = panel.replace(' ','_')
-	print(panel)
+	print('Going through ' + i + ' | ' + panel)
 	# read first xlsx sheet into panda data structure 
 	data = pandas.read_excel(i, sheetname=0, skiprows=index)
 	#just keep select info, depending on what kind of sheet I get
@@ -140,7 +140,6 @@ for i in xlsx:
 
 
 print("\n\nHere are the panels used across the files: ", set(position_panel_dict.values()), "\n\n")
-
 # print hgvs to file for counsyl hvgs (hgvsC_to_vcf-like.py)
 file=open("hgvs_input.txt",'w')
 for k,v in position_zygosity_dict.items():
