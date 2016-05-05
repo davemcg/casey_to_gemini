@@ -95,7 +95,7 @@ for i in xlsx:
 		# merge back together
 		data['HGVSCoding'] = str(data['Transcript'].map(str)) + ':' + str(data['HGVSCoding'])
 	else:
-		data = data[['HGVSCoding','Zygosity','TimesObservedPerPanel']]
+		data = data[['HGVSCoding','Zygosity','TimesObservedPerPanelGroup','SamplesPerPanelGroup']]
 	# drop blanks (in any column)
 	data = data.dropna()
 	# drop anything that doesn't have a HGVS in it
@@ -125,7 +125,7 @@ for i in xlsx:
 			key1 = 'NM_001301365'
 		key = key1 + ':' + key2
 		panels.append(panel)
-		position_zygosity_dict[key][name] = row['Zygosity']
+		position_zygosity_dict[key][name] = row['Zygosity'] + ";;" + str(row['TimesObservedPerPanelGroup']) + ";;" + str(row['SamplesPerPanelGroup'])
 		if key not in position_panel_dict:	
 			position_panel_dict[key] = panel
 		if key in position_panel_dict:
@@ -205,6 +205,8 @@ new_header = \
 ##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype Quality\">\n\
 ##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n\
 ##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification\">\n\
+##INFO=<ID=caseyTOPPG,Number=R,Type=Integer,Description="Casey TimesObservedPerPanelGroup">\n\
+##INFO=<ID=caseySPPG,Number=R,Type=Integer,Description="Casey SamplesPerPanelGroup">\n\
 ##contig=<ID=chrM,length=16571,assembly=hg19>\n\
 ##contig=<ID=chr1,length=249250621,assembly=hg19>\n\
 ##contig=<ID=chr2,length=243199373,assembly=hg19>\n\
@@ -260,6 +262,7 @@ for line in vcf:
 		line.append("GT:AD:DP:PL")
 		# build vcf_key from vcf info
 		vcf_key = line[0] + '_' + line[1] + '_' + line[3] + '_' + line[4]
+
 		# pull genotypes at the position by running HGVS through dict
 		sample_genotypes = position_zygosity_dict[vcf_key]
 		for sample in all_names:
@@ -275,16 +278,17 @@ for line in vcf:
 					# fake AD:DP:PL numbers to appease Gemini
 					line.append("./.:666:666:666")
 			else:
+				line[7] = "caseyTOPPG=" + position_zygosity_dict[vcf_key][sample].split(';;')[1] + '|' + "caseySPPG=" + position_zygosity_dict[vcf_key][sample].split(';;')[2]
 				# casey uses some version of "heterozygote" to mark hets for an allele
-				if 'het' in position_zygosity_dict[vcf_key][sample].lower():
+				if 'het' in position_zygosity_dict[vcf_key][sample].split(';;')[0].lower():
 					line.append("0/1:666:666:666")
 				# similar, homozygous for hom for alt allele
-				elif 'hom' in position_zygosity_dict[vcf_key][sample].lower():
+				elif 'hom' in position_zygosity_dict[vcf_key][sample].split(';;')[0].lower():
 					line.append("1/1:666:666:666")
 				# possible something weird might slip in. Alert user.
 				else:
 					line.append('./.:000:000:000')
-					print('Error, what is: ', sample, position_zygosity_dict[vcf_key][sample].lower())
+					print('Error, what is: ', sample, position_zygosity_dict[vcf_key][sample].split(';;')[0].lower())
 					print('Genotype unknown: ./.')
 		file.write('\t'.join(line))
 		file.write('\n')
