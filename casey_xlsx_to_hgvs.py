@@ -46,9 +46,9 @@ for line in hgvs_zygosity:
 # write vcf for gemini annotation
 today = datetime.date.today()
 
-error_file_name = args.xlsx_file.split('.xlsx')[0] + '.error'
+error_file_name = args.xlsx_file.split(' ')[0] + '.error'
 error_file = open(error_file_name, 'w')
-vcf_file_name = args.xlsx_file.split('.xlsx')[0] + '.vcf'
+vcf_file_name = args.xlsx_file.split(' ')[0] + '.vcf'
 vcf_file = open(vcf_file_name, 'w')
 vcf_file.write('##fileformat=VCFv4.2\n')
 vcf_file.write('##fileDate=' + str(today).replace('-','') + '\n')
