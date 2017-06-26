@@ -47,10 +47,12 @@ subprocess.call(['rm',hgvs_file_name])
 
 
 # check if anything failed to be included (will happen if HGVS can't be parsed)
-# then add it with blanks (.) for everything but the ID
+# write secondary vcf writing out the missing variants
+dat_error_file_name = args.xlsx_file.split(' ')[0] + '.FAILED.dat'
+dat_errorfile = open(dat_error_file_name, 'w')
 for k,v in hgvs_zygosity.items():
 	if k not in vep_vcf:
-		vep_vcf += '.\t.\t' + k + '\t.\t.\t.\t.\t.'
+		dat_errorfile.write(k + '\n')
 
 # write vcf for gemini annotation, using the zygosity to write the sample genotype
 vcf_file_name = args.xlsx_file.split(' ')[0] + '.vcf'
@@ -66,10 +68,8 @@ for line in vep_vcf.split('\n'):
         s_line = line.split('\t')
         if line:
             if 'het' in hgvs_zygosity[s_line[2]]:
-                output =  '\t'.join(s_line[0:4]) + '\t100\tPASS\t.\tGT:GQ:DP\t' + '0/1:100:100\n'
+                output =  '\t'.join(s_line[0:5]) + '\t100\tPASS\t.\tGT:GQ:DP\t' + '0/1:100:100\n'
                 vcf_file.write(output)
             else:
-                output = '\t'.join(s_line[0:4]) + '\t100\tPASS\t.\tGT:GQ:DP\t' + '1/1:100:100\n'
+                output = '\t'.join(s_line[0:5]) + '\t100\tPASS\t.\tGT:GQ:DP\t' + '1/1:100:100\n'
                 vcf_file.write(output)
-
-
