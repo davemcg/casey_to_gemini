@@ -67,7 +67,9 @@ for line in vep_vcf.split('\n'):
     else:
         s_line = line.split('\t')
         if line:
-            if 'het' in hgvs_zygosity[s_line[2]]:
+            if not s_line[4] or not s_line[5]:
+                dat_errorfile.write(s_line[2] + '\n')	
+            elif 'het' in hgvs_zygosity[s_line[2]]:
                 output =  '\t'.join(s_line[0:5]) + '\t100\tPASS\t.\tGT:GQ:DP\t' + '0/1:100:100\n'
                 vcf_file.write(output)
             else:
