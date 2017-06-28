@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3
 
 from openpyxl import load_workbook
+import openpyxl
 import argparse
 import subprocess
 import datetime
@@ -15,27 +16,44 @@ args = parser.parse_args()
 wb = load_workbook(args.xlsx_file)
 ws = wb[wb.get_sheet_names()[0]]
 # identify header row, HGVS coding column, and zygosity column
-for row in range(2, ws.max_row):
-    for column in 'ABCDEFG':
-        cell_name = "{}{}".format(column, row)
-        if ws[cell_name].value == 'HGVSCoding':
-            header_row = row
-            HGVS_column = column
-        if ws[cell_name].value == 'Zygosity':
-            Zygosity_column = column
+for row in range(2, 10):
+    for column in ws.iter_cols():
+        for cell in column:
+            if cell.value == 'HGVSCoding':
+                header_row = cell.row
+                HGVS_column = cell.column
+            if cell.value == 'Zygosity':
+                Zygosity_column = cell.column
+            if cell.value == 'Panel':
+                Panel_column = cell.column
+# get panel type
+for row in range(header_row+1, ws.max_row):
+    if ws[Panel_column + str(row)].value is not None:
+        panel_type = ws[Panel_column + str(row)].value.replace(' ','_')
 
 # get HGVS and zygosity, skipping hidden rows
 hgvs_zygosity = {}
+hgvs_status = {}
 hgvs_file_name =  args.xlsx_file.split(' ')[0] + '_' + str(time.time()) + '.tmp'
 hgvs_file = open(hgvs_file_name, 'w')
 for row in range(header_row+1, ws.max_row):
-    if ws.row_dimensions[row].visible is True:
+    if ws.row_dimensions[row].hidden is False:
         cell_name_hgvs = "{}{}".format(HGVS_column, row)
         cell_name_zyg = "{}{}".format(Zygosity_column, row)
         if ws[cell_name_hgvs].value is not None and ws[cell_name_hgvs].value[0:2] == 'NM':
             hgvs_zygosity[ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
             hgvs_file.write(ws[cell_name_hgvs].value)
             hgvs_file.write('\n')
+            hgvs_status[ws[cell_name_hgvs].value] = 100
+    else:
+        cell_name_hgvs = "{}{}".format(HGVS_column, row)
+        cell_name_zyg = "{}{}".format(Zygosity_column, row)
+        if ws[cell_name_hgvs].value is not None and ws[cell_name_hgvs].value[0:2] == 'NM':
+            hgvs_zygosity[ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
+            hgvs_file.write(ws[cell_name_hgvs].value)
+            hgvs_file.write('\n')
+            hgvs_status[ws[cell_name_hgvs].value] = 50
+
 hgvs_file.close()
 
 # convert to vcf with VEP
@@ -52,10 +70,10 @@ dat_error_file_name = args.xlsx_file.split(' ')[0] + '.FAILED.dat'
 dat_errorfile = open(dat_error_file_name, 'w')
 for k,v in hgvs_zygosity.items():
 	if k not in vep_vcf:
-		dat_errorfile.write(k + '\n')
+		dat_errorfile.write(k + '\t' + str(hgvs_status[k]) + '\n')
 
 # write vcf for gemini annotation, using the zygosity to write the sample genotype
-vcf_file_name = args.xlsx_file.split(' ')[0] + '.vcf'
+vcf_file_name = args.xlsx_file.split(' ')[0] + '_' + panel_type +  '.vcf'
 vcf_file = open(vcf_file_name, 'w')
 
 for line in vep_vcf.split('\n'):
@@ -68,10 +86,10 @@ for line in vep_vcf.split('\n'):
         s_line = line.split('\t')
         if line:
             if not s_line[4] or not s_line[5]:
-                dat_errorfile.write(s_line[2] + '\n')	
+                dat_errorfile.write(s_line[2] + '\t' + str(hgvs_status[s_line[2]]) + '\n')	
             elif 'het' in hgvs_zygosity[s_line[2]]:
-                output =  '\t'.join(s_line[0:5]) + '\t100\tPASS\t.\tGT:GQ:DP\t' + '0/1:100:100\n'
+                output =  '\t'.join(s_line[0:5]) + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '0/1:100:100\n'
                 vcf_file.write(output)
             else:
-                output = '\t'.join(s_line[0:5]) + '\t100\tPASS\t.\tGT:GQ:DP\t' + '1/1:100:100\n'
+                output = '\t'.join(s_line[0:5]) + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '1/1:100:100\n'
                 vcf_file.write(output)
