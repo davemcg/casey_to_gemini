@@ -36,7 +36,7 @@ for one_file_name in vcf_files:
 
 # Now merges all the vcfs into one vcf
 subprocess.call('module load vcftools', shell = True)
-temp_master_vcf_name = /scratch/mcgaugheyd/TEMP_casey_VCFs_' + time.time() + '.vcf'
+temp_master_vcf_name = '/scratch/mcgaugheyd/TEMP_casey_VCFs_' + time.time() + '.vcf'
 subprocess.call('vcf-merge ' + ' '.join(new_vcf_file_names) + ' > ' + temp_master_vcf_name)
 
 # Sort, bgzip, tabix
