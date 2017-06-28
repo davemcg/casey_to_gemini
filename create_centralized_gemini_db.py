@@ -4,6 +4,7 @@ import argparse
 import subprocess
 import gzip
 import glob
+import time 
 
 parser = argparse.ArgumentParser(description= 'Takes in list of vcf.gz (must be tabix\'ed) files from casey_xlsx_to_hgvs.py and sort_bgzip_tabix.sh and changes the sample name to something unique via a temporary vcf, then merges all of the files into a single vcf, and finally creates a gemini database from the master vcf.')
 
@@ -13,7 +14,7 @@ args = parser.parse_args()
 
 vcf_files = args.files
 vcf_files = vcf_files.split(',')
-
+new_vcf_file_names = []
 
 # Opens each file
 # creates a TEMP file in /scratch/mcgaugheyd 
@@ -26,13 +27,23 @@ for one_file_name in vcf_files:
 	vcf_data = one_file.read().decode('utf-8')
 	vcf_data = vcf_data.replace('SAMPLE',prefix)
 	temp_file.write(vcf_data)
-	
-	subprocess.call('bgzip /scratch/mcgaugheyd/' + prefix + '.TEMP.vcf', shell = True)
-	subprocess.call('tabix -p vcf ' + prefix + '.TEMP.vcf.gz', shell = True)
 	one_file.close()
 	temp_file.close()
 
+	subprocess.call('bgzip -f /scratch/mcgaugheyd/' + prefix + '.TEMP.vcf', shell = True)
+	subprocess.call('tabix -f -p vcf /scratch/mcgaugheyd/' + prefix + '.TEMP.vcf.gz', shell = True)
+	new_vcf_file_names.append('/scratch/mcgaugheyd/' + prefix + '.TEMP.vcf.gz')
+
+# Now merges all the vcfs into one vcf
+subprocess.call('module load vcftools', shell = True)
+temp_master_vcf_name = /scratch/mcgaugheyd/TEMP_casey_VCFs_' + time.time() + '.vcf'
+subprocess.call('vcf-merge ' + ' '.join(new_vcf_file_names) + ' > ' + temp_master_vcf_name)
+
+# Sort, bgzip, tabix
+subprocess.call('/home/mcgaugheyd/git/casey_to_gemini/sort_bgzip_tabix.sh ' +t emp_master_vcf_name)
 	
+
+
 
 
 
