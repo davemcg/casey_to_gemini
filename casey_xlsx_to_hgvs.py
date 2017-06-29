@@ -34,34 +34,44 @@ for row in range(header_row+1, ws.max_row):
 # get HGVS and zygosity, skipping hidden rows
 hgvs_zygosity = {}
 hgvs_status = {}
-hgvs_file_name =  args.xlsx_file.split(' ')[0] + '_' + str(time.time()) + '.tmp'
-hgvs_file = open(hgvs_file_name, 'w')
+hgvs_vars = []
 for row in range(header_row+1, ws.max_row):
     if ws.row_dimensions[row].hidden is False:
         cell_name_hgvs = "{}{}".format(HGVS_column, row)
         cell_name_zyg = "{}{}".format(Zygosity_column, row)
         if ws[cell_name_hgvs].value is not None and ws[cell_name_hgvs].value[0:2] == 'NM':
             hgvs_zygosity[ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
-            hgvs_file.write(ws[cell_name_hgvs].value)
-            hgvs_file.write('\n')
             hgvs_status[ws[cell_name_hgvs].value] = 100
+            hgvs_vars.append(ws[cell_name_hgvs].value)
     else:
         cell_name_hgvs = "{}{}".format(HGVS_column, row)
         cell_name_zyg = "{}{}".format(Zygosity_column, row)
         if ws[cell_name_hgvs].value is not None and ws[cell_name_hgvs].value[0:2] == 'NM':
             hgvs_zygosity[ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
-            hgvs_file.write(ws[cell_name_hgvs].value)
-            hgvs_file.write('\n')
             hgvs_status[ws[cell_name_hgvs].value] = 50
+            hgvs_vars.append(ws[cell_name_hgvs].value)
+
+# first attempt local conversion
+print('Local Conversion Begun for ' + args.xlsx_file.split(' ')[0])
+local_conversion_results = subprocess.check_output(['/Users/mcgaugheyd/git/casey_to_gemini/hgvs_to_vcf.py','--comma', ','.join(hgvs_vars)]).decode('utf-8').split('\n')
+
+print('VEP Conversion Begun for ' + args.xlsx_file.split(' ')[0])
+# then take the failures and run against VEP
+hgvs_file_name =  args.xlsx_file.split(' ')[0] + '_' + str(time.time()) + '.tmp'
+hgvs_file = open(hgvs_file_name, 'w')
+for line in local_conversion_results:
+    if 'ERROR:' in line or 'None' in line:
+        failed_hgvs = line.split('\t')[2]
+        hgvs_file.write(failed_hgvs + '\n')
 
 hgvs_file.close()
-
+############
 # convert to vcf with VEP
 vep_call = '/Applications/ensembl-vep/./vep -i ' + hgvs_file_name + ' --port=3337 --refseq --database --force --pick --vcf --output_file STDOUT --no_stats'
 vep_vcf = subprocess.check_output(vep_call, shell = True)
 vep_vcf = vep_vcf.decode('utf-8')
 # rm temp file
-subprocess.call(['rm',hgvs_file_name])
+#subprocess.call(['rm',hgvs_file_name])
 
 
 # check if anything failed to be included (will happen if HGVS can't be parsed)
@@ -76,7 +86,7 @@ for k,v in hgvs_zygosity.items():
 vcf_file_name = args.xlsx_file.split(' ')[0] + '_' + panel_type +  '.vcf'
 vcf_file = open(vcf_file_name, 'w')
 
-for line in vep_vcf.split('\n'):
+for line in vep_vcf.split('\n')[:-1]:
     if line[0:2] == '##':
         vcf_file.write(line)
         vcf_file.write('\n')
@@ -93,3 +103,15 @@ for line in vep_vcf.split('\n'):
             else:
                 output = '\t'.join(s_line[0:5]) + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '1/1:100:100\n'
                 vcf_file.write(output)
+# write the locally converted vcf
+for line in local_conversion_results:
+    s_line = line.split('\t')
+    if 'ERROR:' not in line or 'None' not in line:
+        if 'het' in hgvs_zygosity[line.split('\t')[2]]:
+            output = line + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '0/1:100:100\n'
+            vcf_file.write(output)
+        else:
+            output = line + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '1/1:100:100\n'
+            vcf_file.write(output)
+
+vcf_file.close()
