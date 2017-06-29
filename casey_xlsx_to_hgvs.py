@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(description= 'Takes in xlsx files from John Chi
 parser.add_argument('xlsx_file', help = 'John Chiang / OSU / MVL / Casey patient report xlsx file')
 
 args = parser.parse_args()
-
+print('Begin processing of ' + args.xlsx_file.split(' ')[0] + ' at ' + str(datetime.datetime.now()))
 # load workbook and read sheet names with openpyxl
 wb = load_workbook(args.xlsx_file)
 ws = wb[wb.get_sheet_names()[0]]
@@ -60,7 +60,7 @@ print('VEP Conversion Begun for ' + args.xlsx_file.split(' ')[0])
 hgvs_file_name =  args.xlsx_file.split(' ')[0] + '_' + str(time.time()) + '.tmp'
 hgvs_file = open(hgvs_file_name, 'w')
 for line in local_conversion_results:
-    if 'ERROR:' in line or 'None' in line:
+    if 'ERROR' in line or 'None' in line:
         failed_hgvs = line.split('\t')[2]
         hgvs_file.write(failed_hgvs + '\n')
 
@@ -98,16 +98,16 @@ for line in vep_vcf.split('\n')[:-1]:
             if not s_line[4] or not s_line[5]:
                 dat_errorfile.write(s_line[2] + '\t' + str(hgvs_status[s_line[2]]) + '\n')	
             elif 'het' in hgvs_zygosity[s_line[2]]:
-                output =  '\t'.join(s_line[0:5]) + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '0/1:100:100\n'
+                output =  '\t'.join(s_line[0:5]) + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '0/1:111:111\n'
                 vcf_file.write(output)
             else:
-                output = '\t'.join(s_line[0:5]) + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '1/1:100:100\n'
+                output = '\t'.join(s_line[0:5]) + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '1/1:111:111\n'
                 vcf_file.write(output)
 # write the locally converted vcf
-for line in local_conversion_results:
+for line in local_conversion_results[:-1]:
     s_line = line.split('\t')
-    if 'ERROR:' not in line or 'None' not in line:
-        if 'het' in hgvs_zygosity[line.split('\t')[2]]:
+    if 'ERROR' not in line and 'None' not in line:
+        if 'het' in hgvs_zygosity[s_line[2]]:
             output = line + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '0/1:100:100\n'
             vcf_file.write(output)
         else:
@@ -115,3 +115,4 @@ for line in local_conversion_results:
             vcf_file.write(output)
 
 vcf_file.close()
+print('Done at ' + str(datetime.datetime.now()))
