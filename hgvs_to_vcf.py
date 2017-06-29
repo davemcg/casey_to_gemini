@@ -6,6 +6,7 @@ import hgvs.parser
 import hgvs.assemblymapper
 import sys
 import subprocess
+import argparse
 
 # connect to mapping database
 hp = hgvs.parser.Parser()
@@ -41,20 +42,20 @@ def converter(hgvs_c):
 		# vcf for deletion takes the format chr, pos (1 before the deleletion), 
 			# ref (including the 1 base pair before deletion), alt (just the 1 base pair before deletion)
 		if alt is None and 'del' in hgvs_c:
-			if reference('/Users/mcgaugheyd/GenomicData/ucsc.hg19.fasta', 'chr' + chr, pos, pos+2).upper() == ref:
+			if reference('/Users/mcgaugheyd/GenomicData/ucsc.hg19.fasta', 'chr' + chr, pos, pos+len(ref)-1).upper() == ref:
 				pos = str(int(pos)-1)
 				ref = reference('/Users/mcgaugheyd/GenomicData/ucsc.hg19.fasta', 'chr' + chr, pos, pos).upper() + ref
 				alt = reference('/Users/mcgaugheyd/GenomicData/ucsc.hg19.fasta', 'chr' + chr, pos, pos).upper() 
 			else:
-				alt = '.'
-		output = [str(chr), str(pos), '.', str(ref), str(alt)]
+				raise ValueError('Failed to convert deletion {hgvs}'.format(hgvs=repr(hgvs_c)))
+		output = [str(chr), str(pos), str(hgvs_c), str(ref), str(alt)]
 		return output
 	except Exception as e:
-		output = ["ERROR: ", str(e)]
+		output = ["ERROR: ", str(e), hgvs_c]
 		return(output)
 
 def reference(fasta, chrom, start, stop):
-	""" Take path to fasta file, then use samtools faidx to gragb reference base in region """
+	""" Take path to fasta file, then use samtools faidx to grab reference base in region """
 	region = chrom + ':' + str(start) + '-' + str(stop)
 	# fasta = '/Users/mcgaugheyd/GenomicData/ucsc.hg19.fasta'
 	call = 'samtools faidx ' + fasta + ' ' + region
@@ -62,5 +63,22 @@ def reference(fasta, chrom, start, stop):
 	return(output.split('\n')[1])
 
 if __name__ == '__main__':
-	vcf_like = converter(sys.argv[1])
-	print('\t'.join(vcf_like))
+	parser = argparse.ArgumentParser(description= 'Takes in c. HGVS and converts to a vcf like format')
+	parser.add_argument('--single','-s', help= 'Single HGVS input')
+	parser.add_argument('--file', '-f', help= 'New line separated file of HGVS')
+	parser.add_argument('--comma', '-c', help= 'Comma separated c. HGVS')
+	args = parser.parse_args()
+
+	if args.single:
+		vcf_like = converter(args.single)
+		print('\t'.join(vcf_like))
+	if args.file:
+		hgvs_info = open(args.file,'r')
+		for line in hgvs_info:
+			vcf_like = converter(line[:-1])
+			print('\t'.join(vcf_like))
+	if args.comma:
+		hgvs_info = args.comma.split(',')
+		for line in hgvs_info:
+			vcf_like = converter(line)
+			print('\t'.join(vcf_like))
