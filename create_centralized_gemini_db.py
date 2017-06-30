@@ -36,6 +36,7 @@ for one_file_name in vcf_files:
 	temp_file = open('/scratch/mcgaugheyd/' + prefix + '.TEMP.vcf', 'w')
 	vcf_data = one_file.read().decode('utf-8')
 	vcf_data = vcf_data.replace('SAMPLE',prefix)
+	vcf_data = '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">\n##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">' + vcf_data
 	temp_file.write(vcf_data)
 	one_file.close()
 	temp_file.close()
@@ -45,10 +46,10 @@ for one_file_name in vcf_files:
 	new_vcf_file_names.append('/scratch/mcgaugheyd/' + prefix + '.TEMP.vcf.gz')
 
 # Now merges all the vcfs into one vcf
-subprocess.call('module load vcftools', shell = True)
+#subprocess.call('module load vcftools', shell = True)
 time_stamp = str(time.time())
 temp_master_vcf_name = '/scratch/mcgaugheyd/TEMP_casey_VCFs_' + time_stamp + '.vcf'
-subprocess.call('vcf-merge ' + ' '.join(new_vcf_file_names) + ' > ' + temp_master_vcf_name, shell = True)
+subprocess.check_call('bcftools merge ' + ' '.join(new_vcf_file_names) + ' > ' + temp_master_vcf_name, shell = True)
 
 # Sort, bgzip, tabix
 subprocess.call('/home/mcgaugheyd/git/casey_to_gemini/sort_bgzip_tabix.sh ' + temp_master_vcf_name, shell = True)
