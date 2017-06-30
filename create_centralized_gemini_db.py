@@ -19,7 +19,7 @@ if args.comma:
 	vcf_files = vcf_files.split(',')
 elif args.file:
 	input_file = open(args.file,'r').readlines()
-	vcf_files = [item[:-1] for item in input_files]
+	vcf_files = [item[:-1] for item in input_file]
 else:
 	print('Missing input')
 	sys.exit()
