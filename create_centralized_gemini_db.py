@@ -5,15 +5,25 @@ import subprocess
 import gzip
 import glob
 import time 
+import sys
 
 parser = argparse.ArgumentParser(description= 'Takes in list of vcf.gz (must be tabix\'ed) files from casey_xlsx_to_hgvs.py and sort_bgzip_tabix.sh and changes the sample name to something unique via a temporary vcf, then merges all of the files into a single vcf, and finally creates a gemini database from the master vcf.')
 
-parser.add_argument('files',  help = 'vcf.gz files, comma separated. * allowed if double escaped')
+parser.add_argument('--comma', '-c',  help = 'vcf.gz files, comma separated')
+parser.add_argument('--file', '-f', help = 'new line separated vcf.gz files')
 parser.add_argument('gemini_db_name', help = 'name for Gemini database')
 args = parser.parse_args()
 
-vcf_files = args.files
-vcf_files = vcf_files.split(',')
+if args.comma:
+	vcf_files = args.comma
+	vcf_files = vcf_files.split(',')
+elif args.file:
+	input_file = open(vcf_files,'r').readlines()
+	vcf_files = [item[:-1] for item in input_files]
+else:
+	print('Missing input')
+	sys.exit()
+
 new_vcf_file_names = []
 
 # Opens each file
