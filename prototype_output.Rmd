@@ -3,6 +3,36 @@ output:
   html_notebook:
     code_folding: hide
 ---
+```{r}
+# pull John primary variants
+primary <- system("gemini query --header -q 'select chrom, start, end, ref, alt, vcf_id, hgvsc, hgvsp, type, gene, impact, rs_ids, pfam_domain, clinvar_diseases, clinvar_ID, clinvar_pathogenic, clinvar_sig, hgmd_overlap, af_exac_afr, af_exac_all af_exac_amr, af_exac_eas, af_exac_nfe af_exac_oth, af_exac_sas, an_exac_all, exac_num_het, exac_num_hom_alt, mis_z, pli, gerp_elements, polyphen_pred, polyphen_score, sift_pred, sift_score, cadd_phred FROM variants WHERE qual > 51' .db", intern=TRUE)
+
+primaryDF <- data.frame(do.call(rbind, strsplit(primary, '\t')))
+colnames(primaryDF) <- as.character(unlist(primaryDF[1,]))
+primaryDF <- primaryDF[-1,] 
+primaryDF$Priority <- 'Primary'
+
+# pull John hidden variants
+secondary <- system("gemini query --header -q 'select chrom, start, end, ref, alt, vcf_id, hgvsc, hgvsp, type, gene, impact, rs_ids, pfam_domain, clinvar_diseases, clinvar_ID, clinvar_pathogenic, clinvar_sig, hgmd_overlap, af_exac_afr, af_exac_all af_exac_amr, af_exac_eas, af_exac_nfe af_exac_oth, af_exac_sas, an_exac_all, exac_num_het, exac_num_hom_alt, mis_z, pli, gerp_elements, polyphen_pred, polyphen_score, sift_pred, sift_score, cadd_phred FROM variants WHERE qual < 51' 17-1012_RD_v11_assay.db", intern=TRUE)
+
+secondaryDF <- data.frame(do.call(rbind, strsplit(secondary, '\t')))
+colnames(secondaryDF) <- as.character(unlist(secondaryDF[1,]))
+secondaryDF <- secondaryDF[-1,] 
+secondaryDF$Priority <- 'Secondary'
+
+variantDF <- rbind(primaryDF, secondaryDF)
+
+# pull full db to query counts for cohort 
+all_var <- system("gemini query --show-samples --header -q 'select chrom, start, end, ref, alt, vcf_id, qual, num_het, num_hom_alt, old_multiallelic FROM variants' test_30.db", intern = TRUE)
+all_varDF <- data.frame(do.call(rbind, strsplit(all_var, '\t')))
+colnames(all_varDF) <- as.character(unlist(all_varDF[1,]))
+all_varDF <- all_varDF[-1,] 
+all_varDF <- all_varDF %>% group_by(chrom, start, end, ref, alt) %>% 
+	summarise(num_het = max(as.integer(as.character(num_het))), 
+	num_hom_alt = max(as.integer(as.character(num_hom_alt))),
+	het_samples = paste(unique(strsplit(paste(het_samples, collapse=','), ',')[[1]]), collapse=','),
+	hom_alt_samples = paste(unique(strsplit(paste(hom_alt_samples, collapse=','), ',')[[1]]), collapse=','))
+```
 
 ```{r}
 library(tidyverse)
@@ -31,10 +61,12 @@ google_link_generator <- function(var, gene){
 # Primary Variants (as per MVL Genomics)
 ```{r}
 variantDF_joined_view <- variantDF_joined %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:hom_alt_samples)
-all_cols <- seq(1,ncol(variantDF_joined))
-exac <- c(2,6,grep('exac', colnames(variantDF_joined), ignore.case = T))
-
+# select indices for different column views
+all_cols <- seq(1,ncol(variantDF_joined_view))
+exac <- c(2,6,grep('exac', colnames(variantDF_joined_view), ignore.case = T))
 neg_exac <- setdiff(all_cols, exac) - 1
+core <- c(1,2,6,7,8,12)
+neg_core <- setdiff(all_cols, core) - 1
 variantDF_joined_view %>% 
   filter(Priority == 'Primary') %>% 
   mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases))) %>% 
@@ -51,9 +83,11 @@ variantDF_joined_view %>%
                                dom = 'Bfrtip',
                                buttons = list(list(extend='pageLength'),
                                               list(extend='colvis', collectionLayout='four-column'),
+                                              list(extend='colvisGroup', text='Core Fields', hide=paste(neg_core, collapse = ','), show = paste(core, collapse = ',')),
                                               list(extend='colvisGroup', text='ExAC', hide=paste(neg_exac,collapse = ','), show = paste(exac, collapse = ',' )),
                                               list(extend='colvisGroup', text='Show All', show = ':hidden' )),
-                               columnDefs=list(list(targets=c(1), class="dt-left"))))
+                               columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
+  DT::formatSignif(columns=c('af_exac_afr','af_exac_amr','af_exac_eas','af_exac_oth','af_exac_sas','an_exac_all','mis_z','pli'),3)
 ```
 
 # Secondary/benign/hidden Variants (as per MVL Genomics)
