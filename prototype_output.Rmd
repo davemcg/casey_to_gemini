@@ -60,7 +60,7 @@ google_link_generator <- function(var, gene){
 
 # Primary Variants (as per MVL Genomics)
 ```{r}
-variantDF_joined_view <- variantDF_joined %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:hom_alt_samples)
+variantDF_joined_view <- variantDF_joined %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:hom_alt_samples, -Priority)
 # select indices for different column views
 all_cols <- seq(1,ncol(variantDF_joined_view))
 exac <- c(2,6,grep('exac', colnames(variantDF_joined_view), ignore.case = T))
