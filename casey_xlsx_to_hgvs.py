@@ -41,14 +41,14 @@ for row in range(header_row+1, ws.max_row):
         cell_name_zyg = "{}{}".format(Zygosity_column, row)
         if ws[cell_name_hgvs].value is not None and ws[cell_name_hgvs].value[0:2] == 'NM':
             hgvs_zygosity[ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
-            hgvs_status[ws[cell_name_hgvs].value] = 100
+            hgvs_status[ws[cell_name_hgvs].value] = 'Primary'
             hgvs_vars.append(ws[cell_name_hgvs].value)
     else:
         cell_name_hgvs = "{}{}".format(HGVS_column, row)
         cell_name_zyg = "{}{}".format(Zygosity_column, row)
         if ws[cell_name_hgvs].value is not None and ws[cell_name_hgvs].value[0:2] == 'NM':
             hgvs_zygosity[ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
-            hgvs_status[ws[cell_name_hgvs].value] = 50
+            hgvs_status[ws[cell_name_hgvs].value] = 'Secondary'
             hgvs_vars.append(ws[cell_name_hgvs].value)
 
 # first attempt local conversion
@@ -94,6 +94,7 @@ for line in vep_vcf.split('\n')[:-1]:
         vcf_file.write(line)
         vcf_file.write('\n')
     elif line[0:6] == '#CHROM':
+        vcf_file.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n##FORMAT=<ID=CT,Number=1,Type=String,Description="HGVS to VCF Converter Tool. VEP is VEP, DM is David McGaughey invitae hgvs conversion">\n##FORMAT=<ID=JC,Number=1,Type=String,Description="MVL/John Chiang variant status. Primary is his likely deleterious variants. Secondary is likely benign">\n')
         vcf_file.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n')
     else:
         s_line = line.split('\t')
@@ -101,20 +102,20 @@ for line in vep_vcf.split('\n')[:-1]:
             if not s_line[4] or not s_line[5]:
                 dat_errorfile.write(s_line[2] + '\t' + str(hgvs_status[s_line[2]]) + '\n')	
             elif 'het' in hgvs_zygosity[s_line[2]]:
-                output =  '\t'.join(s_line[0:5]) + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '0/1:111:111\n'
+                output =  '\t'.join(s_line[0:5]) + '\t' + '.' + '\tPASS\t.\tGT:CT:JC\t' + '0/1:VEP:' + str(hgvs_status[s_line[2]]) + '\n'
                 vcf_file.write(output)
             else:
-                output = '\t'.join(s_line[0:5]) + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '1/1:111:111\n'
+                output =  '\t'.join(s_line[0:5]) + '\t' + '.' + '\tPASS\t.\tGT:CT:JC\t' + '1/1:VEP:' + str(hgvs_status[s_line[2]]) + '\n'
                 vcf_file.write(output)
 # write the locally converted vcf
 for line in local_conversion_results.split('\n')[:-1]:
     s_line = line.split('\t')
     if 'ERROR' not in line and 'None' not in line:
         if 'het' in hgvs_zygosity[s_line[2]]:
-            output = line + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '0/1:100:100\n'
+            output = line + '\t' + '.' + '\tPASS\t.\tGT:CT:JC\t' + '0/1:DM:' + str(hgvs_status[s_line[2]]) + '\n'
             vcf_file.write(output)
         else:
-            output = line + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '1/1:100:100\n'
+            output = line + '\t' + '.' + '\tPASS\t.\tGT:CT:JC\t' + '1/1:DM:' + str(hgvs_status[s_line[2]]) + '\n'
             vcf_file.write(output)
 
 dat_errorfile.close()
