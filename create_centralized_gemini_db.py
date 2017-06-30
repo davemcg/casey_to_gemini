@@ -36,7 +36,6 @@ for one_file_name in vcf_files:
 	temp_file = open('/scratch/mcgaugheyd/' + prefix + '.TEMP.vcf', 'w')
 	vcf_data = one_file.read().decode('utf-8')
 	vcf_data = vcf_data.replace('SAMPLE',prefix)
-	vcf_data = vcf_data.replace('##fileformat=VCFv4.1\n','##fileformat=VCFv4.1\n##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">\n##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">\n')
 	temp_file.write(vcf_data)
 	one_file.close()
 	temp_file.close()
@@ -66,7 +65,7 @@ subprocess.check_call(['cp', temp_ped_file, '.'])
 subprocess.check_call(['cp', temp_master_vcf_name + '.gz', '.'])
 
 # create db
-subprocess.call('sbatch --partition=quick --cpus-per-task 8 /home/mcgaugheyd/git/variant_prioritization/GATK_vcf_to_geminiDB.sh ' + temp_master_vcf_name.split('/')[-1] + '.gz ' + temp_ped_file.split('/')[-1] + ' ' + args.gemini_db_name, shell = True)
+subprocess.call('sbatch --partition=quick --cpus-per-task 16 /home/mcgaugheyd/git/variant_prioritization/GATK_vcf_to_geminiDB.sh ' + temp_master_vcf_name.split('/')[-1] + '.gz ' + temp_ped_file.split('/')[-1] + ' ' + args.gemini_db_name, shell = True)
 
 # remove temp files
 subprocess.call(['rm',temp_ped_file])
