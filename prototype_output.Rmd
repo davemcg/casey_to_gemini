@@ -1,0 +1,83 @@
+---
+output: 
+  html_notebook:
+    code_folding: hide
+---
+
+```{r}
+library(tidyverse)
+load('~/Desktop/variantDF_joined_17-1012_RD_v11_assay.Rdata')
+link_generator <- function(base_url, ID){
+  ends <- strsplit(ID, ',')[[1]]
+  url <- ''
+  for (end in ends){
+    url <- paste(paste0('<a href="', base_url, end, '">', end, '</a>'), url)
+  }
+    if (ID == 'None') {
+    url <- NA
+    }
+  return(as.character(url))
+}
+
+google_link_generator <- function(var, gene){
+  url = 'https://scholar.google.com/scholar?hl=en&q='
+  var <- gsub('>','%3E',var)
+  var <- strsplit(var, ':')[[1]][2]
+  output <- paste0('<a href="', url, var, '+', gene,'">', 'Lucky?', '</a>')
+  return(output)
+}
+```
+
+# Primary Variants (as per MVL Genomics)
+```{r}
+variantDF_joined_view <- variantDF_joined %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:hom_alt_samples)
+all_cols <- seq(1,ncol(variantDF_joined))
+exac <- c(2,6,grep('exac', colnames(variantDF_joined), ignore.case = T))
+
+neg_exac <- setdiff(all_cols, exac) - 1
+variantDF_joined_view %>% 
+  filter(Priority == 'Primary') %>% 
+  mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases))) %>% 
+  rowwise() %>% 
+  mutate(ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
+           rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
+         `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene)))) %>% 
+  DT::datatable(width=1200, 
+                escape = FALSE,
+                rownames = F, 
+                class='compact', 
+                extensions = c('FixedColumns','Buttons'), 
+                options = list(pageLength = 30,
+                               dom = 'Bfrtip',
+                               buttons = list(list(extend='pageLength'),
+                                              list(extend='colvis', collectionLayout='four-column'),
+                                              list(extend='colvisGroup', text='ExAC', hide=paste(neg_exac,collapse = ','), show = paste(exac, collapse = ',' )),
+                                              list(extend='colvisGroup', text='Show All', show = ':hidden' )),
+                               columnDefs=list(list(targets=c(1), class="dt-left"))))
+```
+
+# Secondary/benign/hidden Variants (as per MVL Genomics)
+```{r}
+variantDF_joined_view <- variantDF_joined %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:hom_alt_samples)
+all_cols <- seq(1,ncol(variantDF_joined))
+exac <- c(2,6,grep('exac', colnames(variantDF_joined), ignore.case = T))
+neg_exac <- setdiff(all_cols, exac) - 1
+variantDF_joined_view %>% 
+  filter(Priority == 'Secondary') %>% 
+  mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases))) %>% 
+  rowwise() %>% 
+  mutate(ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
+           rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids))) %>% 
+  DT::datatable(width=1200, 
+                escape = FALSE,
+                rownames = F, 
+                class='compact', 
+                extensions = c('FixedColumns','Buttons'), 
+                options = list(pageLength = 10,
+                               dom = 'Bfrtip',
+                               buttons = list(list(extend='pageLength'),
+                                              list(extend='colvis', collectionLayout='four-column'),
+                                              list(extend='colvisGroup', text='Show All', show = ':hidden' ),
+                                              list(extend='colvisGroup', text='ExAC', hide=paste(neg_exac,collapse = ','), show = paste(exac, collapse = ',' ))),
+                               columnDefs=list(list(targets=c(1), class="dt-left"))))
+```
