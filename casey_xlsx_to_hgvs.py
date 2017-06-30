@@ -53,16 +53,19 @@ for row in range(header_row+1, ws.max_row):
 
 # first attempt local conversion
 print('Local Conversion Begun for ' + args.xlsx_file.split(' ')[0])
-local_conversion_results = subprocess.check_output(['/Users/mcgaugheyd/git/casey_to_gemini/hgvs_to_vcf.py','--comma', ','.join(hgvs_vars)]).decode('utf-8').split('\n')
+local_conversion_results = subprocess.check_output(['/Users/mcgaugheyd/git/casey_to_gemini/hgvs_to_vcf.py','--comma', ','.join(hgvs_vars)]).decode('utf-8')
 
 print('VEP Conversion Begun for ' + args.xlsx_file.split(' ')[0])
 # then take the failures and run against VEP
 hgvs_file_name =  args.xlsx_file.split(' ')[0] + '_' + str(time.time()) + '.tmp'
 hgvs_file = open(hgvs_file_name, 'w')
-for line in local_conversion_results:
+successful_local_conversion_results = ''
+for line in local_conversion_results.split('\n'):
     if 'ERROR' in line or 'None' in line:
         failed_hgvs = line.split('\t')[2]
         hgvs_file.write(failed_hgvs + '\n')
+    else:
+        successful_local_conversion_results += line
 
 hgvs_file.close()
 ############
@@ -76,10 +79,10 @@ vep_vcf = vep_vcf.decode('utf-8')
 
 # check if anything failed to be included (will happen if HGVS can't be parsed)
 # write secondary vcf writing out the missing variants
-dat_error_file_name = args.xlsx_file.split(' ')[0] + '.FAILED.dat'
+dat_error_file_name = args.xlsx_file.split(' ')[0] + '_' + panel_type + '.FAILED.dat'
 dat_errorfile = open(dat_error_file_name, 'w')
 for k,v in hgvs_zygosity.items():
-	if k not in vep_vcf:
+	if k not in vep_vcf and k not in successful_local_conversion_results:
 		dat_errorfile.write(k + '\t' + str(hgvs_status[k]) + '\n')
 
 # write vcf for gemini annotation, using the zygosity to write the sample genotype
@@ -104,7 +107,7 @@ for line in vep_vcf.split('\n')[:-1]:
                 output = '\t'.join(s_line[0:5]) + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '1/1:111:111\n'
                 vcf_file.write(output)
 # write the locally converted vcf
-for line in local_conversion_results[:-1]:
+for line in local_conversion_results.split('\n')[:-1]:
     s_line = line.split('\t')
     if 'ERROR' not in line and 'None' not in line:
         if 'het' in hgvs_zygosity[s_line[2]]:
@@ -114,5 +117,10 @@ for line in local_conversion_results[:-1]:
             output = line + '\t' + str(hgvs_status[s_line[2]]) + '\tPASS\t.\tGT:GQ:DP\t' + '1/1:100:100\n'
             vcf_file.write(output)
 
+dat_errorfile.close()
 vcf_file.close()
+
+# sort, bgzip, tabix
+subprocess.call(['/Users/mcgaugheyd/git/casey_to_gemini/sort_bgzip_tabix.sh',vcf_file_name])
+
 print('Done at ' + str(datetime.datetime.now()))
