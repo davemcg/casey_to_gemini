@@ -22,7 +22,12 @@ def converter(hgvs_c):
 	""" Take HGVS (coding) input and return chr, GRCh37 position, reference allele, alternative allele """
 	
 	# parse into hgvs structure
-	var_c = hp.parse_hgvs_variant(hgvs_c)
+	try:
+		var_c = hp.parse_hgvs_variant(hgvs_c)
+	except Exception as e:
+		output = ["ERROR: ", str(e), hgvs_c]
+		return(output)
+
 	# translate into genomic coordinates
 	try:
 		var_g = vm37.c_to_g(var_c)
