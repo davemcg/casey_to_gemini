@@ -85,7 +85,7 @@ if (length(HGVS[!HGVS %in% all_DF$vcf_id]) > 0){
       print(paste("ERROR: missing ", i)) 
       quit(status = 1)
     }
-    priority <- all_IDs %>% filter(HGVS==i) %>% pull(Status)
+    priority <- all_IDs %>% filter(HGVS==i) %>% pull(Priority)
     all_DF <- rbind(all_DF, DF_maker(gemini_query(gemini_db, i, ref, alt), priority) )
   }
 }
