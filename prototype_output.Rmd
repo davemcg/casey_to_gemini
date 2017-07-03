@@ -179,7 +179,7 @@ if (nrow(all_DF_view %>% filter(Priority == 'Primary'))>0){
     mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
            variant_samples = gsub(',', ', ', as.character(variant_samples)),
            het_samples = gsub(',', ', ', as.character(het_samples)),
-           hot_alt_samples = gsub(',', ', ', as.character(hom_alt_samples))) %>% 
+           hom_alt_samples = gsub(',', ', ', as.character(hom_alt_samples))) %>% 
     rowwise() %>% 
     mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
            ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
