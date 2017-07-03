@@ -37,6 +37,11 @@ def converter(hgvs_c):
 			chr = 'X'
 		if chr == '24':
 			chr = 'Y'
+		# ensures the converted ref and alt match original
+		if var_c.posedit.edit.ref != var_g.posedit.edit.ref:
+			raise ValueError('Ref does not match {hgvs}'.format(hgvs=repr(hgvs_c)))
+		if var_c.posedit.edit.alt != var_g.posedit.edit.alt:
+			raise ValueError('Alt does not match {hgvs}'.format(hgvs=repr(hgvs_c)))
 		# position
 		pos = var_g.posedit.pos.start.base
 		# ref
