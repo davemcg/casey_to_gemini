@@ -85,7 +85,13 @@ secondary_DF <- DF_maker(gemini_query(gemini_db, secondary_IDs), 'Secondary')
 all_DF <- rbind(primary_DF, secondary_DF)
 primary_IDs <- ID_to_DF(primary_IDs, 'Primary')
 secondary_IDs <- ID_to_DF(secondary_IDs, 'Secondary')
-all_IDs <- rbind(primary_IDs, secondary_IDs)
+if (nrow(primary_IDs)==0){
+  all_IDs <- secondary_IDs
+} else if (nrow(secondary_IDs==0)){
+  all_IDs <- primary_IDs
+} else {
+  all_IDs <- rbind(primary_IDs, secondary_IDs)
+}
 
 #find failures to match ID/vcf_id and add
 HGVS = all_IDs$HGVS
