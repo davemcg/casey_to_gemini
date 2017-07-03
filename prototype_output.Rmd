@@ -107,32 +107,44 @@ if (length(HGVS[!HGVS %in% all_DF$vcf_id]) > 0){
 ```{r, include = F}
 # Helper scripts to generate URLs for the tables
 link_generator <- function(base_url, ID){
-  ends <- strsplit(ID, ',')[[1]]
-  url <- ''
-  for (end in ends){
-    url <- paste(paste0('<a href="', base_url, end, '">', end, '</a> '), url)
-  }
-  if (ID == 'None') {
+  if (is.na(ID) | is.na(base_url) | ID == 'None' | base_url == 'None'){
     url <- NA
+  }
+  else {
+    ends <- strsplit(ID, ',')[[1]]
+    url <- ''
+    for (end in ends){
+      url <- paste(paste0('<a href="', base_url, end, '">', end, '</a> '), url)
+    }
+    if (ID == 'None') {
+      url <- NA
+    }
   }
   return(as.character(url))
 }
 clinvar_link_generator <- function(base_url, ID, clinvar_sig){
-  ends <- strsplit(ID, ',')[[1]]
-  url <- ''
-  for (end in ends){
-    url <- paste(paste0('<a href="', base_url, end, '">', as.character(clinvar_sig), '</a> '), url)
-  }
-  if (clinvar_sig == 'None') {
+  if (clinvar_sig == 'None' | is.na(clinvar_sig) | is.na(ID) | ID == 'None') {
     url <- NA
+  }
+  else {
+    ends <- strsplit(ID, ',')[[1]]
+    url <- ''
+    for (end in ends){
+      url <- paste(paste0('<a href="', base_url, end, '">', as.character(clinvar_sig), '</a> '), url)
+    }
   }
   return(as.character(url))
 }
 google_link_generator <- function(var, gene){
-  url = 'https://scholar.google.com/scholar?hl=en&q='
-  var <- gsub('>','%3E',var)
-  var <- strsplit(var, ':')[[1]][2]
-  output <- paste0('<a href="', url, var, '+', gene,'">', 'Feeling&nbspLucky?', '</a>')
+  if (is.na(var) || is.na(gene) || var == 'None' || gene == 'None'){
+    output <- NA
+  }
+  else {
+    url = 'https://scholar.google.com/scholar?hl=en&q='
+    var <- gsub('>','%3E',var)
+    var <- strsplit(var, ':')[[1]][2]
+    output <- paste0('<a href="', url, var, '+', gene,'">', 'Feeling&nbspLucky?', '</a>')
+  }
   return(output)
 }
 ```
@@ -143,7 +155,7 @@ colnames(failed) <- c('vcf_id','Priority')
 ```
 # Primary Variants (as per MVL Genomics)
 ```{r}
-all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:Priority) %>% bind_rows(failed)
+#all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:Priority) %>% bind_rows(failed)
 # select indices for different column views
 all_cols <- seq(1,ncol(all_DF_view))
 exac <- c(2,6,grep('exac', colnames(all_DF_view), ignore.case = T))
