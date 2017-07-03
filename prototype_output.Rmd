@@ -130,7 +130,7 @@ google_link_generator <- function(var, gene){
   url = 'https://scholar.google.com/scholar?hl=en&q='
   var <- gsub('>','%3E',var)
   var <- strsplit(var, ':')[[1]][2]
-  output <- paste0('<a href="', url, var, '+', gene,'">', 'Lucky?', '</a>')
+  output <- paste0('<a href="', url, var, '+', gene,'">', 'Feeling&nbspLucky?', '</a>')
   return(output)
 }
 ```
@@ -142,14 +142,15 @@ all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select
 all_cols <- seq(1,ncol(all_DF_view))
 exac <- c(2,6,grep('exac', colnames(all_DF_view), ignore.case = T))
 neg_exac <- setdiff(all_cols, exac) - 1
-core <- c(1,2,4,6,7,8,11,13)
+core <- c(1,2,4,6,7,8,13)
 neg_core <- setdiff(all_cols, core) - 1
 # print!
 all_DF_view %>% 
   filter(Priority == 'Primary') %>% 
   mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases))) %>% 
   rowwise() %>% 
-  mutate(ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
+  mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
+    ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
         clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
          rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
          `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene)))) %>% 
@@ -177,7 +178,9 @@ all_DF_view %>%
   filter(Priority == 'Secondary') %>% 
   mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases))) %>% 
   rowwise() %>% 
-  mutate(ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
+  mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
+    ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
+        clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
          rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
          `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene)))) %>% 
   DT::datatable(width=1200, 
