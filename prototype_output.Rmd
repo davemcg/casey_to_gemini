@@ -106,13 +106,13 @@ if (length(HGVS[!HGVS %in% all_DF$vcf_id]) > 0){
   for (i in HGVS[!HGVS %in% all_DF$vcf_id]){
     ref <- id_status %>% filter(ID==i) %>% .[['REF']]
     alt <- id_status %>% filter(ID==i) %>% .[['ALT']]
-    query_result <- gemini_query(gemini_db, i, ref, alt)
+    query_result <- gemini_query(gemini_db, i, sample_name, ref, alt)
     if (length(query_result) != 2) {
       print(paste("ERROR: missing ", i)) 
       quit(status = 1)
     }
     priority <- all_IDs %>% filter(HGVS==i) %>% pull(Priority)
-    all_DF <- rbind(all_DF, DF_maker(gemini_query(gemini_db, i, ref, alt), priority) )
+    all_DF <- rbind(all_DF, DF_maker(gemini_query(gemini_db, i, sample_name, ref, alt), priority) )
   }
 }
 ```
