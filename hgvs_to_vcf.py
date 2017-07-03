@@ -13,6 +13,7 @@ hp = hgvs.parser.Parser()
 hdp = hgvs.dataproviders.uta.connect()
 vm37 = hgvs.assemblymapper.AssemblyMapper(
     hdp, assembly_name='GRCh37', alt_aln_method='splign')
+vr = hgvs.validator.Validator(hdp=hdp)
 
 # unit test inputs
 hgvs_c = 'NM_018474.4:c.226C>T'
@@ -24,6 +25,7 @@ def converter(hgvs_c):
 	# parse into hgvs structure
 	try:
 		var_c = hp.parse_hgvs_variant(hgvs_c)
+		vr.validate(var_c)
 	except Exception as e:
 		output = ["ERROR: ", str(e), hgvs_c]
 		return(output)
@@ -37,11 +39,6 @@ def converter(hgvs_c):
 			chr = 'X'
 		if chr == '24':
 			chr = 'Y'
-		# ensures the converted ref and alt match original
-		if var_c.posedit.edit.ref != var_g.posedit.edit.ref:
-			raise ValueError('Ref does not match {hgvs}'.format(hgvs=repr(hgvs_c)))
-		if var_c.posedit.edit.alt != var_g.posedit.edit.alt:
-			raise ValueError('Alt does not match {hgvs}'.format(hgvs=repr(hgvs_c)))
 		# position
 		pos = var_g.posedit.pos.start.base
 		# ref
