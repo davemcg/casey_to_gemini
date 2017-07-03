@@ -172,7 +172,8 @@ colnames(failed) <- c('vcf_id','Priority')
 all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:Priority) %>% bind_rows(failed)
 # find gt index
 gts_index <- grep('gts',colnames(all_DF_view))
-
+colnames(all_DF_view)[gts_index] <- gsub('_', ' ', sample_name)
+  
 # select indices for different column views
 all_cols <- seq(1,ncol(all_DF_view))
 exac <- c(2, gts_index, 6,grep('exac', colnames(all_DF_view), ignore.case = T))
