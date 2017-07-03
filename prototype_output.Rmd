@@ -152,7 +152,6 @@ all_DF_view %>%
   mutate(ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
         clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
          rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
-        
          `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene)))) %>% 
   DT::datatable(width=1200, 
                 escape = FALSE,
