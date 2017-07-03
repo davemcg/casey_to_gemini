@@ -80,16 +80,22 @@ ID_to_DF <- function(IDs, priority){
 ```{r, include = FALSE}
 gemini_db <- params$master_db
 
-if (length(primary_DF>0)){
+if (length(primary_IDs>0)){
   primary_DF <- DF_maker(gemini_query(gemini_db, primary_IDs), 'Primary')
-} else {primary_DF <- NA}
-if (length(secondary_DF)>0){
+  primary_IDs <- ID_to_DF(primary_IDs, 'Primary')
+} else {
+  primary_DF <- NA
+  primary_IDs <- NA
+}
+if (length(secondary_IDs)>0){
   secondary_DF <- DF_maker(gemini_query(gemini_db, secondary_IDs), 'Secondary')
-} else {seconary_DF <- NA}
+} else {
+  secondary_DF <- NA
+  secondary_IDs <- NA
+}
 
 all_DF <- rbind(primary_DF, secondary_DF)
-primary_IDs <- ID_to_DF(primary_IDs, 'Primary')
-secondary_IDs <- ID_to_DF(secondary_IDs, 'Secondary')
+all_IDs <- rbind(primary_IDs, secondary_IDs)
 
 #find failures to match ID/vcf_id and add
 HGVS = all_IDs$HGVS
@@ -167,57 +173,61 @@ neg_exac <- setdiff(all_cols, exac) - 1
 core <- c(1,2,4,6,7,8,13)
 neg_core <- setdiff(all_cols, core) - 1
 # print!
-all_DF_view %>% 
-  filter(Priority == 'Primary') %>% 
-  mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases))) %>% 
-  rowwise() %>% 
-  mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
-    ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
-        clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
-         rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
-         `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene)))) %>% 
-  DT::datatable(width=1200, 
-                escape = FALSE,
-                rownames = F, 
-                class='compact', 
-                extensions = c('FixedColumns','Buttons'), 
-                options = list(columnDefs=list(list(targets=neg_core, visible = FALSE)),
-                               pageLength = 30,
-                               dom = 'Bfrtip',
-                               buttons = list(list(extend='pageLength'),
-                                              list(extend='colvis', collectionLayout='four-column'),
-                                              list(extend='colvisGroup', text='Core Fields', hide=paste(neg_core, collapse = ','), show = paste(core, collapse = ',')),
-                                              list(extend='colvisGroup', text='ExAC', hide=paste(neg_exac,collapse = ','), show = paste(exac, collapse = ',' )),
-                                              list(extend='colvisGroup', text='Show All', show = ':hidden' )),
-                               columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
-  DT::formatSignif(columns=c('af_exac_afr','af_exac_amr','af_exac_eas','af_exac_oth','af_exac_sas','an_exac_all','mis_z','pli'),3)
+if (nrow(all_DF_view %>% filter(Priority == 'Primary'))>0){
+  all_DF_view %>% 
+    filter(Priority == 'Primary') %>% 
+    mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases))) %>% 
+    rowwise() %>% 
+    mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
+           ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
+           clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
+           rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
+           `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene)))) %>% 
+    DT::datatable(width=1200, 
+                  escape = FALSE,
+                  rownames = F, 
+                  class='compact', 
+                  extensions = c('FixedColumns','Buttons'), 
+                  options = list(columnDefs=list(list(targets=neg_core, visible = FALSE)),
+                                 pageLength = 30,
+                                 dom = 'Bfrtip',
+                                 buttons = list(list(extend='pageLength'),
+                                                list(extend='colvis', collectionLayout='four-column'),
+                                                list(extend='colvisGroup', text='Core Fields', hide=paste(neg_core, collapse = ','), show = paste(core, collapse = ',')),
+                                                list(extend='colvisGroup', text='ExAC', hide=paste(neg_exac,collapse = ','), show = paste(exac, collapse = ',' )),
+                                                list(extend='colvisGroup', text='Show All', show = ':hidden' )),
+                                 columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
+    DT::formatSignif(columns=c('af_exac_afr','af_exac_amr','af_exac_eas','af_exac_oth','af_exac_sas','an_exac_all','mis_z','pli'),3)
+}
 ```
 
 # Secondary/benign/hidden Variants (as per MVL Genomics)
 ```{r}
 # print!
-all_DF_view %>% 
-  filter(Priority == 'Secondary') %>% 
-  mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases))) %>% 
-  rowwise() %>% 
-  mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
-    ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
-        clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
-         rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
-         `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene)))) %>% 
-  DT::datatable(width=1200, 
-                escape = FALSE,
-                rownames = F, 
-                class='compact', 
-                extensions = c('FixedColumns','Buttons'), 
-                options = list(columnDefs=list(list(targets=neg_core, visible = FALSE)),
-                               pageLength = 30,
-                               dom = 'Bfrtip',
-                               buttons = list(list(extend='pageLength'),
-                                              list(extend='colvis', collectionLayout='four-column'),
-                                              list(extend='colvisGroup', text='Core Fields', hide=paste(neg_core, collapse = ','), show = paste(core, collapse = ',')),
-                                              list(extend='colvisGroup', text='ExAC', hide=paste(neg_exac,collapse = ','), show = paste(exac, collapse = ',' )),
-                                              list(extend='colvisGroup', text='Show All', show = ':hidden' )),
-                               columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
-  DT::formatSignif(columns=c('af_exac_afr','af_exac_amr','af_exac_eas','af_exac_oth','af_exac_sas','an_exac_all','mis_z','pli'),3)
+if (nrow(all_DF_view %>% filter(Priority == 'Secondary'))>0){
+  all_DF_view %>% 
+    filter(Priority == 'Secondary') %>% 
+    mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases))) %>% 
+    rowwise() %>% 
+    mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
+           ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
+           clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
+           rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
+           `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene)))) %>% 
+    DT::datatable(width=1200, 
+                  escape = FALSE,
+                  rownames = F, 
+                  class='compact', 
+                  extensions = c('FixedColumns','Buttons'), 
+                  options = list(columnDefs=list(list(targets=neg_core, visible = FALSE)),
+                                 pageLength = 30,
+                                 dom = 'Bfrtip',
+                                 buttons = list(list(extend='pageLength'),
+                                                list(extend='colvis', collectionLayout='four-column'),
+                                                list(extend='colvisGroup', text='Core Fields', hide=paste(neg_core, collapse = ','), show = paste(core, collapse = ',')),
+                                                list(extend='colvisGroup', text='ExAC', hide=paste(neg_exac,collapse = ','), show = paste(exac, collapse = ',' )),
+                                                list(extend='colvisGroup', text='Show All', show = ':hidden' )),
+                                 columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
+    DT::formatSignif(columns=c('af_exac_afr','af_exac_amr','af_exac_eas','af_exac_oth','af_exac_sas','an_exac_all','mis_z','pli'),3)
+}
 ```
