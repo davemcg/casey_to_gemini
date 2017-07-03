@@ -22,7 +22,8 @@ library(tidyverse)
 #setwd('/data/mcgaugheyd/projects/nei/hufnagel/casey_panels/test2')
 
 # read in vcf to count number of header rows to skip
-con <- file(params$patient_vcf, open = 'r')
+file = params$patient_vcf
+con <- file(file, open = 'r')
 data <- readLines(con)
 row_skip <- sum(sapply(data, function(x) ifelse(substr(x,1,2)=='##', 1,0)))
 # now use fread to pull in vcf, skipping header rows
@@ -36,7 +37,7 @@ gemini_query <- function(gemini_db, vcf_id, ref, alt){
   # Queries gemini in two ways:
   ## With the HGVS as the search term
   ## If ref, alt given, then uses HGVS as a fuzzy match and ref alt to confirm
-  base_query <- "gemini query --header -q 'select chrom, start, end, ref, alt, vcf_id, hgvsc, hgvsp, type, gene, impact, rs_ids, pfam_domain, clinvar_diseases, clinvar_ID, clinvar_pathogenic, clinvar_sig, hgmd_overlap, af_exac_afr, af_exac_all af_exac_amr, af_exac_eas, af_exac_nfe af_exac_oth, af_exac_sas, an_exac_all, exac_num_het, exac_num_hom_alt, mis_z, pli, gerp_elements, polyphen_pred, polyphen_score, sift_pred, sift_score, cadd_phred FROM variants "
+  base_query <- "gemini query --show-samples --header -q 'select chrom, start, end, ref, alt, vcf_id, hgvsc, hgvsp, type, gene, impact, rs_ids, pfam_domain, clinvar_diseases, clinvar_ID, clinvar_pathogenic, clinvar_sig, hgmd_overlap, af_exac_afr, af_exac_all af_exac_amr, af_exac_eas, af_exac_nfe af_exac_oth, af_exac_sas, an_exac_all, exac_num_het, exac_num_hom_alt, mis_z, pli, gerp_elements, polyphen_pred, polyphen_score, sift_pred, sift_score, cadd_phred FROM variants "
 
   if (missing(ref) & missing(alt)){
        out <- system(paste0(base_query,
@@ -126,10 +127,10 @@ google_link_generator <- function(var, gene){
 
 # Primary Variants (as per MVL Genomics)
 ```{r}
-all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:hom_alt_samples)
+all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:Priority)
 # select indices for different column views
-all_cols <- seq(1,ncol(variantDF_joined_view))
-exac <- c(2,6,grep('exac', colnames(variantDF_joined_view), ignore.case = T))
+all_cols <- seq(1,ncol(all_DF_view))
+exac <- c(2,6,grep('exac', colnames(all_DF_view), ignore.case = T))
 neg_exac <- setdiff(all_cols, exac) - 1
 core <- c(1,2,6,7,8,12)
 neg_core <- setdiff(all_cols, core) - 1
@@ -159,11 +160,11 @@ all_DF_view %>%
 
 # Secondary/benign/hidden Variants (as per MVL Genomics)
 ```{r}
-variantDF_joined_view <- variantDF_joined %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:hom_alt_samples)
+all_DF_view <- variantDF_joined %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:hom_alt_samples)
 all_cols <- seq(1,ncol(variantDF_joined))
 exac <- c(2,6,grep('exac', colnames(variantDF_joined), ignore.case = T))
 neg_exac <- setdiff(all_cols, exac) - 1
-variantDF_joined_view %>% 
+all_DF_view %>% 
   filter(Priority == 'Secondary') %>% 
   mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases))) %>% 
   rowwise() %>% 
