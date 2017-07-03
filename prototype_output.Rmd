@@ -132,7 +132,7 @@ all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select
 all_cols <- seq(1,ncol(all_DF_view))
 exac <- c(2,6,grep('exac', colnames(all_DF_view), ignore.case = T))
 neg_exac <- setdiff(all_cols, exac) - 1
-core <- c(1,2,6,7,8,12)
+core <- c(1,2,6,7,8,13)
 neg_core <- setdiff(all_cols, core) - 1
 # print!
 all_DF_view %>% 
