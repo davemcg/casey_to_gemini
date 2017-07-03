@@ -160,10 +160,7 @@ all_DF_view %>%
 
 # Secondary/benign/hidden Variants (as per MVL Genomics)
 ```{r}
-all_DF_view <- variantDF_joined %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:hom_alt_samples)
-all_cols <- seq(1,ncol(variantDF_joined))
-exac <- c(2,6,grep('exac', colnames(variantDF_joined), ignore.case = T))
-neg_exac <- setdiff(all_cols, exac) - 1
+
 all_DF_view %>% 
   filter(Priority == 'Secondary') %>% 
   mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases))) %>% 
