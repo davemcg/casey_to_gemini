@@ -189,20 +189,21 @@ neg_core <- setdiff(all_cols, core) - 1
 ```{r}
 # print!
 if (nrow(all_DF_view %>% filter(Priority == 'Primary'))>0){
-  all_DF_view %>% 
+  out <- 'No primary variants'
+} else {
+  out <- all_DF_view %>% 
     dplyr::filter(Priority == 'Primary') %>% 
     dplyr::mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
-           variant_samples = gsub(',', ', ', as.character(variant_samples)),
-           het_samples = gsub(',', ', ', as.character(het_samples)),
-           hom_alt_samples = gsub(',', ', ', as.character(hom_alt_samples))) %>% 
+                  variant_samples = gsub(',', ', ', as.character(variant_samples)),
+                  het_samples = gsub(',', ', ', as.character(het_samples)),
+                  hom_alt_samples = gsub(',', ', ', as.character(hom_alt_samples))) %>% 
     dplyr::rowwise() %>% 
     dplyr::mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
-           ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
-           clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
-           rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
-           `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene))),
-           vcf_id = link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(vcf_id))) %>% 
-    data.frame() %>% 
+                  ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
+                  clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
+                  rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
+                  `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene))),
+                  vcf_id = link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(vcf_id))) %>% 
     DT::datatable(width=1200, 
                   escape = FALSE,
                   rownames = F, 
@@ -219,6 +220,7 @@ if (nrow(all_DF_view %>% filter(Priority == 'Primary'))>0){
                                  columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
     DT::formatSignif(columns=c('af_exac_afr','af_exac_amr','af_exac_eas','af_exac_oth','af_exac_sas','an_exac_all','mis_z','pli'),3)
 }
+out
 ```
 
 ### Secondary Variants
