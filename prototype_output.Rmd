@@ -82,6 +82,7 @@ ID_to_DF <- function(IDs, priority){
 ```{r, include = FALSE}
 gemini_db <- params$master_db
 sample_name <- params$patient_ID
+old_sample <- sample_name
 sample_name <- gsub('-','_', sample_name)
 if (length(primary_IDs>0)){
   primary_DF <- DF_maker(gemini_query(gemini_db, primary_IDs, sample_name), 'Primary')
@@ -167,7 +168,9 @@ google_link_generator <- function(var, gene){
 failed <- fread(params$failed, header = F)
 colnames(failed) <- c('vcf_id','Priority')
 ```
-# Primary Variants (as per MVL Genomics)
+# `r gsub('_',' ', old_sample)`
+
+## Primary Variants 
 ```{r}
 all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:Priority) %>% bind_rows(failed)
 # find gt index
@@ -193,7 +196,8 @@ if (nrow(all_DF_view %>% filter(Priority == 'Primary'))>0){
            ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
            clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
            rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
-           `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene)))) %>% 
+           `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene))),
+           vcf_id = link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(vcf_id))) %>% 
     DT::datatable(width=1200, 
                   escape = FALSE,
                   rownames = F, 
@@ -212,11 +216,11 @@ if (nrow(all_DF_view %>% filter(Priority == 'Primary'))>0){
 }
 ```
 
-# Secondary/benign/hidden Variants (as per MVL Genomics)
+## Secondary/benign/hidden Variants
 ```{r}
-if (nrow(all_DF_view %>% filter(Priority == 'Secondary'))>0){
+if (nrow(all_DF_view %>% filter(Priority == 'Primary'))>0){
   all_DF_view %>% 
-    filter(Priority == 'Secondary') %>% 
+    filter(Priority == 'Primary') %>% 
     mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
            variant_samples = gsub(',', ', ', as.character(variant_samples)),
            het_samples = gsub(',', ', ', as.character(het_samples)),
@@ -226,7 +230,8 @@ if (nrow(all_DF_view %>% filter(Priority == 'Secondary'))>0){
            ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
            clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
            rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
-           `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene)))) %>% 
+           `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene))),
+           vcf_id = link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(vcf_id))) %>% 
     DT::datatable(width=1200, 
                   escape = FALSE,
                   rownames = F, 
