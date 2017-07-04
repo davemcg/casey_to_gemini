@@ -32,10 +32,10 @@ data <- readLines(con)
 row_skip <- sum(sapply(data, function(x) ifelse(substr(x,1,2)=='##', 1,0)))
 # now use fread to pull in vcf, skipping header rows
 vcf <- fread(paste('zcat', file), skip=row_skip)
-id_status <- vcf %>% select(`#CHROM`, POS, ID, REF, ALT, SAMPLE) %>% separate(SAMPLE, c('GT', 'CT', 'JC'), ':')
+id_status <- vcf %>% dplyr::select(`#CHROM`, POS, ID, REF, ALT, SAMPLE) %>% dplyr::separate(SAMPLE, c('GT', 'CT', 'JC'), ':')
 
-primary_IDs <- id_status %>% filter(JC=='Primary') %>% .[['ID']]
-secondary_IDs <- id_status %>% filter(JC=='Secondary') %>% .[['ID']]
+primary_IDs <- id_status %>% dplyr::filter(JC=='Primary') %>% .[['ID']]
+secondary_IDs <- id_status %>% dplyr::filter(JC=='Secondary') %>% .[['ID']]
 
 gemini_query <- function(gemini_db, vcf_id, sample_name, ref, alt){
   # Queries gemini in two ways:
@@ -172,7 +172,7 @@ colnames(failed) <- c('vcf_id','Priority')
 
 ```{r, include=F}
 # prep for printing
-all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:Priority) %>% bind_rows(failed)
+all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:Priority) %>% bind_rows(failed) %>% mutate_if(is.factor, as.character)
 # find gt index
 gts_index <- grep('gts',colnames(all_DF_view))
 colnames(all_DF_view)[gts_index] <- 'Genotype'
@@ -190,13 +190,13 @@ neg_core <- setdiff(all_cols, core) - 1
 # print!
 if (nrow(all_DF_view %>% filter(Priority == 'Primary'))>0){
   all_DF_view %>% 
-    filter(Priority == 'Primary') %>% 
-    mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
+    dplyr::filter(Priority == 'Primary') %>% 
+    dplyr::mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
            variant_samples = gsub(',', ', ', as.character(variant_samples)),
            het_samples = gsub(',', ', ', as.character(het_samples)),
            hom_alt_samples = gsub(',', ', ', as.character(hom_alt_samples))) %>% 
-    rowwise() %>% 
-    mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
+    dplyr::rowwise() %>% 
+    dplyr::mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
            ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
            clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
            rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
@@ -224,13 +224,13 @@ if (nrow(all_DF_view %>% filter(Priority == 'Primary'))>0){
 ```{r}
 if (nrow(all_DF_view %>% filter(Priority == 'Secondary'))>0){
   all_DF_view %>% 
-    filter(Priority == 'Secondary') %>% 
-    mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
+    dplyr::filter(Priority == 'Secondary') %>% 
+    dplyr::mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
            variant_samples = gsub(',', ', ', as.character(variant_samples)),
            het_samples = gsub(',', ', ', as.character(het_samples)),
            hom_alt_samples = gsub(',', ', ', as.character(hom_alt_samples))) %>% 
-    rowwise() %>% 
-    mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
+    dplyr::rowwise() %>% 
+    dplyr::mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
            ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
            clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
            rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
