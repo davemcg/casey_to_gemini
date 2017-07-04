@@ -184,7 +184,7 @@ neg_exac <- setdiff(all_cols, exac) - 1
 core <- c(1, gts_index, 2,4,6,7,8,13)
 neg_core <- setdiff(all_cols, core) - 1
 ```
-# `r gsub('_',' ', old_sample)` {.tabset}
+## `r gsub('_',' ', old_sample)` {.tabset .tabset-fade}
 ### Primary Variants 
 ```{r}
 # print!
