@@ -19,8 +19,10 @@ knitr::opts_chunk$set(echo = F,
 ```
 
 ```{r, include = FALSE}
+library(rmarkdown)
 library(data.table)
-library(tidyverse)
+library(dplyr)
+library(tidyr)
 #gemini_db <- 'test_40.db'
 #file <- '17-1012_RD_v11_assay.VEP.GRCh37.anno.vcf.gz'
 #setwd('/data/mcgaugheyd/projects/nei/hufnagel/casey_panels/test2')
