@@ -189,7 +189,6 @@ neg_core <- setdiff(all_cols, core) - 1
 
 # format DF
 all_DF_view <- all_DF_view %>% 
-    dplyr::filter(Priority == 'Primary') %>% 
     dplyr::mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
                   variant_samples = gsub(',', ', ', as.character(variant_samples)),
                   het_samples = gsub(',', ', ', as.character(het_samples)),
