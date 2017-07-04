@@ -32,7 +32,7 @@ data <- readLines(con)
 row_skip <- sum(sapply(data, function(x) ifelse(substr(x,1,2)=='##', 1,0)))
 # now use fread to pull in vcf, skipping header rows
 vcf <- fread(paste('zcat', file), skip=row_skip)
-id_status <- vcf %>% dplyr::select(`#CHROM`, POS, ID, REF, ALT, SAMPLE) %>% dplyr::separate(SAMPLE, c('GT', 'CT', 'JC'), ':')
+id_status <- vcf %>% dplyr::select(`#CHROM`, POS, ID, REF, ALT, SAMPLE) %>% tidyr::separate(SAMPLE, c('GT', 'CT', 'JC'), ':')
 
 primary_IDs <- id_status %>% dplyr::filter(JC=='Primary') %>% .[['ID']]
 secondary_IDs <- id_status %>% dplyr::filter(JC=='Secondary') %>% .[['ID']]
