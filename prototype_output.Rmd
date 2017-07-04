@@ -1,7 +1,7 @@
 ---
 date: '`r strftime(Sys.time(), format = "%B %d, %Y")`'
 output: 
-  html_document:
+  html_document
 params:
   master_db:
     value: x
@@ -188,7 +188,7 @@ neg_core <- setdiff(all_cols, core) - 1
 ## `r gsub('_',' ', old_sample)` {.tabset .tabset-fade}
 ### Primary Variants 
 ```{r}
-# print!
+out <- ''
 if (nrow(all_DF_view %>% filter(Priority == 'Primary')) == 0){
   out <- 'No primary variants'
 } else {
@@ -226,6 +226,7 @@ out
 
 ### Secondary Variants
 ```{r}
+out <- ''
 if (nrow(all_DF_view %>% filter(Priority == 'Secondary')) == 0){
   out <- 'No secondary variants'
 } else {
