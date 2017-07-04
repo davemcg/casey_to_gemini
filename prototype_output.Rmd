@@ -228,11 +228,11 @@ out
 
 ### Secondary Variants
 ```{r}
-out <- ''
+out2 <- ''
 if (nrow(all_DF_view %>% filter(Priority == 'Secondary')) == 0){
-  out <- 'No secondary variants'
+  out2 <- 'No secondary variants'
 } else {
-  out <- all_DF_view %>% 
+  out2 <- all_DF_view %>% 
     dplyr::filter(Priority == 'Secondary') %>% 
     dplyr::mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
                   variant_samples = gsub(',', ', ', as.character(variant_samples)),
@@ -261,5 +261,5 @@ if (nrow(all_DF_view %>% filter(Priority == 'Secondary')) == 0){
                                  columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
     DT::formatSignif(columns=c('af_exac_afr','af_exac_amr','af_exac_eas','af_exac_oth','af_exac_sas','an_exac_all','mis_z','pli'),3)
 }
-out
+out2
 ```
