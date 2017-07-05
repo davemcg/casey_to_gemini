@@ -247,7 +247,7 @@ if (nrow(all_DF_view %>% filter(Priority == 'Secondary')) == 0){
                   rownames = F, 
                   class='compact', 
                   extensions = c('FixedColumns','Buttons'), 
-                  options = list(columnDefs=list(list(targets=neg_core, visible = FALSE)),
+                  options = list(columnDefs=list(list(targets=neg_core-1, visible = FALSE)),
                                  pageLength = 30,
                                  dom = 'Bfrtip',
                                  buttons = list(list(extend='pageLength'),
