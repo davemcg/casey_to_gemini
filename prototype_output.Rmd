@@ -44,7 +44,7 @@ gemini_query <- function(gemini_db, vcf_id, sample_name, ref, alt){
   # Queries gemini in two ways:
   ## With the HGVS as the search term
   ## If ref, alt given, then uses HGVS as a fuzzy match and ref alt to confirm
-  base_query <- "gemini query --show-samples --header -q 'select chrom, start, end, ref, alt, vcf_id, hgvsc, hgvsp, type, gene, impact, rs_ids, pfam_domain, clinvar_diseases, clinvar_ID, clinvar_pathogenic, clinvar_sig, hgmd_overlap, num_het, num_hom_alt, af_exac_afr, af_exac_all af_exac_amr, af_exac_eas, af_exac_nfe af_exac_oth, af_exac_sas, an_exac_all, exac_num_het, exac_num_hom_alt, mis_z, pli, gerp_elements, polyphen_pred, polyphen_score, sift_pred, sift_score, cadd_phred FROM variants "
+  base_query <- "gemini query --show-samples --header -q 'select chrom, start, end, ref, alt, vcf_id, hgvsc, hgvsp, type, gene, impact, impact_severity, rs_ids, pfam_domain, clinvar_diseases, clinvar_ID, clinvar_pathogenic, clinvar_sig, hgmd_overlap, num_het, num_hom_alt, af_exac_afr, af_exac_all af_exac_amr, af_exac_eas, af_exac_nfe af_exac_oth, af_exac_sas, an_exac_all, exac_num_het, exac_num_hom_alt, mis_z, pli, gerp_elements, polyphen_pred, polyphen_score, sift_pred, sift_score, cadd_phred FROM variants "
   base_query <- gsub(' FROM', paste0(', gts.', sample_name, ' FROM'), base_query)
   if (missing(ref) & missing(alt)){
     out <- system(paste0(base_query,
@@ -185,7 +185,8 @@ all_DF_view <- all_DF_view %>%
     dplyr::mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
                   variant_samples = gsub(',', ', ', as.character(variant_samples)),
                   het_samples = gsub(',', ', ', as.character(het_samples)),
-                  hom_alt_samples = gsub(',', ', ', as.character(hom_alt_samples))) %>% 
+                  hom_alt_samples = gsub(',', ', ', as.character(hom_alt_samples)),
+                  DeleteriousMark = ifelse(impact_severity=='HIGH' | grepl('pathog', clinvar_sig), 'Candidate', NA)) %>% 
     dplyr::rowwise() %>% 
     dplyr::mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
                   ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
@@ -233,7 +234,8 @@ if (nrow(all_DF_view %>% filter(Priority == 'Primary')) == 0){
                                                 list(extend='colvisGroup', text='ExAC', hide=paste(neg_exac-1,collapse = ','), show = paste(exac-1, collapse = ',' )),
                                                 list(extend='colvisGroup', text='Show All', show = ':hidden' )),
                                  columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
-    DT::formatSignif(columns=c('af exac afr','af exac amr','af exac eas','af exac oth','af exac sas','an exac all','mis z','pli'),3)
+    DT::formatSignif(columns=c('af exac afr','af exac amr','af exac eas','af exac oth','af exac sas','an exac all','mis z','pli'),3) %>% 
+    DT::formatStyle('DeleteriousMark', target = 'row', backgroundColor = styleEqual(c(NA, 'Candidate'), c('white', 'red')))
 }
 out
 ```
@@ -259,7 +261,8 @@ if (nrow(all_DF_view %>% filter(Priority == 'Secondary')) == 0){
                                                 list(extend='colvisGroup', text='ExAC', hide=paste(neg_exac-1,collapse = ','), show = paste(exac-1, collapse = ',' )),
                                                 list(extend='colvisGroup', text='Show All', show = ':hidden' )),
                                  columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
-    DT::formatSignif(columns=c('af exac afr','af exac amr','af exac eas','af exac oth','af exac sas','an exac all','mis z','pli'),3)
+    DT::formatSignif(columns=c('af exac afr','af exac amr','af exac eas','af exac oth','af exac sas','an exac all','mis z','pli'),3) %>% 
+    DT::formatStyle('DeleteriousMark', target = 'row', backgroundColor = styleEqual(c(NA, 'Candidate'), c('white', 'red')))
 }
 out
 ```
@@ -268,13 +271,16 @@ out
 
 This report is auto-generated with scripts written by David McGaughey on `r strftime(Sys.time(), format = "%B %d, %Y")`
 
-**WARNINGS/LIMITATIONS:** This report *may* have mistakes including, but not limited to:
+**WARNINGS/LIMITATIONS** 
+
+This report *may* have mistakes and omissions including, but not limited to:
 
 - Incorrect HGVS conversion to genomic coordinates which can result in the incorrect genotype for a variant
 - Dropping of variants from the original .xlsx file
 - Only variants from the .xlsx can be included - CNV/etc. analyses will not be reported. 
+- Heterygous (num het) and Homozygous Alternative (num hom alt) allele counts **do not have a denominator** as we have no way which samples in the OGVFB cohort have the reference genotype
 
-Please refer to the original .xlsx file and MVL/John Chiang report for the original genotype calls
+The definitive source of the genotype calls and analysis are the original.xlsx file and MVL/John Chiang clinical report, respectively
 
 
 
