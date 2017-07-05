@@ -188,14 +188,14 @@ all_DF_view <- all_DF_view %>%
                 hom_alt_samples = gsub(',', ', ', as.character(hom_alt_samples)),
                 DeleteriousMark = ifelse((impact_severity=='HIGH' | grepl('pathog', clinvar_sig)) & max_aaf_all < 0.1, 'Candidate', NA),
                 impact_severity = factor(impact_severity, levels = c('HIGH','MED','LOW',NA))) %>% 
-  dplyr::rowwise() %>% 
-  dplyr::mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
-                ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
-                clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
-                rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
-                `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene))),
-                gene = link_generator('https://www.omim.org/search/?search=', as.character(gene)),
-                vcf_id = link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(vcf_id))) %>% 
+all_DF_view$hvgsp = strsplit(as.character(all_DF_view$hgvsp),':')[[1]][2]
+all_DF_view$ID = link_generator('http://gnomad.broadinstitute.org/variant/',as.character(all_DF_view$ID))
+all_DF_view$clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(all_DF_view$rs_ids), as.character(all_DF_view$clinvar_sig))
+all_DF_view$rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(all_DF_view$rs_ids))
+all_DF_view$'Google Scholar' = google_link_generator(as.character(all_DF_view$vcf_id), as.character((all_DF_view$gene)))
+all_DF_view$gene = link_generator('https://www.omim.org/search/?search=', as.character(all_DF_view$gene))
+all_DF_view$vcf_id = link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(all_DF_view$vcf_id))
+all_DF_view <- all_DF_view %>% 
   dplyr::arrange(impact_severity) %>% 
   data.table()
 colnames(all_DF_view) <- gsub('_', ' ', colnames(all_DF_view))
