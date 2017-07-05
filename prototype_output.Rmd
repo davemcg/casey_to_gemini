@@ -192,6 +192,7 @@ all_DF_view <- all_DF_view %>%
                   clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(rs_ids), as.character(clinvar_sig)),
                   rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(rs_ids)),
                   `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene))),
+                  gene = link_generator('https://www.omim.org/search/?search=', as.character(gene)),
                   vcf_id = link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(vcf_id))) %>% data.table()
 colnames(all_DF_view) <- gsub('_', ' ', colnames(all_DF_view))
 
@@ -271,6 +272,7 @@ This report is auto-generated with scripts written by David McGaughey on `r strf
 
 - Incorrect HGVS conversion to genomic coordinates which can result in the incorrect genotype for a variant
 - Dropping of variants from the original .xlsx file
+- Only variants from the .xlsx can be included - CNV/etc. analyses will not be reported. 
 
 Please refer to the original .xlsx file and MVL/John Chiang report for the original genotype calls
 
