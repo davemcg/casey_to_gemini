@@ -222,7 +222,7 @@ if (nrow(all_DF_view %>% filter(Priority == 'Primary')) == 0){
 } else {
   out <- all_DF_view %>% 
     dplyr::filter(Priority == 'Primary') %>% 
-    dplyr::arrange(`impact severity`) %>% 
+    dplyr::arrange(DeleteriousMark, `impact severity`) %>% 
     DT::datatable(width=1200, 
                   escape = FALSE,
                   rownames = F, 
@@ -238,7 +238,7 @@ if (nrow(all_DF_view %>% filter(Priority == 'Primary')) == 0){
                                                 list(extend='colvisGroup', text='Show All', show = ':hidden' )),
                                  columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
     DT::formatSignif(columns=c('af exac afr','af exac amr','af exac eas','af exac oth','af exac sas','an exac all','mis z','pli'),3) %>% 
-    DT::formatStyle(columns = c('DeleteriousMark'), target = 'row', backgroundColor = DT::styleEqual(c(NA, 'Candidate'), c('white', 'red')))
+    DT::formatStyle(columns = c('DeleteriousMark'), target = 'row', backgroundColor = DT::styleEqual(c(NA, 'Candidate'), c('white', '#ff6d66')))
 }
 out
 ```
@@ -250,7 +250,7 @@ if (nrow(all_DF_view %>% filter(Priority == 'Secondary')) == 0){
 } else {
   out <- all_DF_view %>% 
     dplyr::filter(Priority == 'Secondary') %>% 
-    dplyr::arrange(`impact severity`) %>% 
+    dplyr::arrange(DeleteriousMark, `impact severity`) %>% 
     DT::datatable(width=1200, 
                   escape = FALSE,
                   rownames = F, 
@@ -266,7 +266,7 @@ if (nrow(all_DF_view %>% filter(Priority == 'Secondary')) == 0){
                                                 list(extend='colvisGroup', text='Show All', show = ':hidden' )),
                                  columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
     DT::formatSignif(columns=c('af exac afr','af exac amr','af exac eas','af exac oth','af exac sas','an exac all','mis z','pli'),3) %>% 
-    DT::formatStyle(columns = c('DeleteriousMark'), target = 'row', backgroundColor = DT::styleEqual(c(NA, 'Candidate'), c('white', 'red')))
+    DT::formatStyle(columns = c('DeleteriousMark'), target = 'row', backgroundColor = DT::styleEqual(c(NA, 'Candidate'), c('white', '#ff6d66')))
 }
 out
 ```
