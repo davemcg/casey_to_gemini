@@ -186,7 +186,8 @@ all_DF_view <- all_DF_view %>%
                 variant_samples = gsub(',', ', ', as.character(variant_samples)),
                 het_samples = gsub(',', ', ', as.character(het_samples)),
                 hom_alt_samples = gsub(',', ', ', as.character(hom_alt_samples)),
-                DeleteriousMark = factor(ifelse(impact_severity=='HIGH' | grepl('pathog', clinvar_sig), 'Candidate', NA), levels=c('HIGH','MED','LOW'))) %>% 
+                DeleteriousMark = ifelse(impact_severity=='HIGH' | grepl('pathog', clinvar_sig), 'Candidate', NA),
+                impact_severity = factor(impact_severity, levels = c('HIGH','MED','LOW',NA))) %>% 
   dplyr::rowwise() %>% 
   dplyr::mutate(hgvsp = strsplit(as.character(hgvsp),':')[[1]][2],
                 ID=link_generator('http://gnomad.broadinstitute.org/variant/',as.character(ID)),
@@ -195,7 +196,7 @@ all_DF_view <- all_DF_view %>%
                 `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene))),
                 gene = link_generator('https://www.omim.org/search/?search=', as.character(gene)),
                 vcf_id = link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(vcf_id))) %>% 
-  dplyr::arrange(DeleteriousMark) %>% 
+  dplyr::arrange(impact_severity) %>% 
   data.table()
 colnames(all_DF_view) <- gsub('_', ' ', colnames(all_DF_view))
 
