@@ -187,7 +187,8 @@ all_DF_view <- all_DF_view %>%
                 het_samples = gsub(',', ', ', as.character(het_samples)),
                 hom_alt_samples = gsub(',', ', ', as.character(hom_alt_samples)),
                 DeleteriousMark = ifelse((impact_severity=='HIGH' | grepl('pathog', clinvar_sig)) & max_aaf_all < 0.1, 'Candidate', NA),
-                impact_severity = factor(impact_severity, levels = c('HIGH','MED','LOW',NA))) %>% 
+                impact_severity = factor(impact_severity, levels = c('HIGH','MED','LOW',NA))) 
+
 all_DF_view$hvgsp = strsplit(as.character(all_DF_view$hgvsp),':')[[1]][2]
 all_DF_view$ID = link_generator('http://gnomad.broadinstitute.org/variant/',as.character(all_DF_view$ID))
 all_DF_view$clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(all_DF_view$rs_ids), as.character(all_DF_view$clinvar_sig))
