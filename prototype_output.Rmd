@@ -174,8 +174,11 @@ colnames(failed) <- c('vcf_id','Priority')
 
 
 ```{r, include=F}
+# find gt index
+gts_index <- grep('gts',colnames(all_DF_view))
+colnames(all_DF_view)[gts_index] <- 'Genotype'
 # prep for printing
-all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, vcf_id:Priority) %>% bind_rows(failed) %>% mutate_if(is.factor, as.character)
+all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, Genotype, vcf_id:Priority) %>% bind_rows(failed) %>% mutate_if(is.factor, as.character)
 # format DF
 all_DF_view <- all_DF_view %>% 
     dplyr::mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
@@ -190,9 +193,8 @@ all_DF_view <- all_DF_view %>%
                   `Google Scholar` = google_link_generator(as.character(vcf_id), as.character((gene))),
                   vcf_id = link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(vcf_id))) %>% data.table()
 colnames(all_DF_view) <- gsub('_', ' ', colnames(all_DF_view))
-# find gt index
-gts_index <- grep('gts',colnames(all_DF_view))
-colnames(all_DF_view)[gts_index] <- 'Genotype'
+
+#
 gts_index <- grep('Genotype',colnames(all_DF_view))
 # find cohort counts
 het_index <- grep('^num het', colnames(all_DF_view))
@@ -201,9 +203,9 @@ hom_index <- grep('^num hom alt', colnames(all_DF_view))
 gs <- grep('Scholar', colnames(all_DF_view))
 # select indices for different column views
 all_cols <- seq(1,ncol(all_DF_view))
-exac <- c(2, gts_index, 6,grep('exac', colnames(all_DF_view), ignore.case = T))
+exac <- c(3, gts_index, 7, grep('exac', colnames(all_DF_view), ignore.case = T))
 neg_exac <- setdiff(all_cols, exac) - 1
-core <- c(1, gts_index, 2,4,6,7,8,13, het_index, hom_index, gs)
+core <- c(1, gts_index, 3,5,7,8,9,15, het_index, hom_index, gs)
 neg_core <- setdiff(all_cols, core) - 1
 
 
