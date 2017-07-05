@@ -190,6 +190,8 @@ failed <- failed_read(params$failed)
 gts_index <- grep('gts',colnames(all_DF))
 colnames(all_DF)[gts_index] <- 'Genotype'
 # prep for printing
+## if failed file doesn't exist, then don't bind rows with it 
+## otherwise merge data with failed hgvs
 if (is.na(failed_read(params$failed))){
   all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, Genotype, vcf_id:Priority) %>% mutate_if(is.factor, as.character) %>% data.table()
 } else { 
