@@ -169,8 +169,15 @@ google_link_generator <- function(var, gene){
 ```
 
 ```{r, include = FALSE}
-failed <- fread(params$failed, header = F)
-colnames(failed) <- c('vcf_id','Priority')
+
+failed_read <- function (failed) {
+  failed <- tryCatch({
+    out <- fread(failed, header = F)
+    out <- colnames(failed) <- c('vcf_id','Priority')
+  }, error=function(e) out <- NA)
+  return(out)
+}
+failed <- failed_read(params$failed)
 ```
 
 
