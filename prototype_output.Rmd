@@ -133,7 +133,7 @@ link_generator <- function(base_url, ID){
     ends <- strsplit(ID, ',')[[1]]
     url <- ''
     for (end in ends){
-      url <- paste(paste0('<a href="', base_url, end, '">', end, '</a> '), url)
+      url <- paste(paste0('<a href="', base_url, end, '" target="_blank">', end, '</a> '), url)
     }
     if (ID == 'None') {
       url <- NA
@@ -149,7 +149,7 @@ clinvar_link_generator <- function(base_url, ID, clinvar_sig){
     ends <- strsplit(ID, ',')[[1]]
     url <- ''
     for (end in ends){
-      url <- paste(paste0('<a href="', base_url, end, '">', as.character(clinvar_sig), '</a> '), url)
+      url <- paste(paste0('<a href="', base_url, end, '" target="_blank">', as.character(clinvar_sig), '</a> '), url)
     }
   }
   return(as.character(url))
@@ -162,7 +162,7 @@ google_link_generator <- function(var, gene){
     url = 'https://scholar.google.com/scholar?hl=en&q='
     var <- gsub('>','%3E',var)
     var <- strsplit(var, ':')[[1]][2]
-    output <- paste0('<a href="', url, var, '+', gene,'">', 'Feeling&nbspLucky?', '</a>')
+    output <- paste0('<a href="', url, var, '+', gene, '" target="_blank">', 'Feeling&nbspLucky?', '</a>')
   }
   return(output)
 }
