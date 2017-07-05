@@ -175,10 +175,10 @@ colnames(failed) <- c('vcf_id','Priority')
 
 ```{r, include=F}
 # find gt index
-gts_index <- grep('gts',colnames(all_DF_view))
-colnames(all_DF_view)[gts_index] <- 'Genotype'
+gts_index <- grep('gts',colnames(all_DF))
+colnames(all_DF)[gts_index] <- 'Genotype'
 # prep for printing
-all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, Genotype, vcf_id:Priority) %>% bind_rows(failed) %>% mutate_if(is.factor, as.character)
+all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, Genotype, vcf_id:Priority) %>% bind_rows(failed) %>% mutate_if(is.factor, as.character) %>% data.table()
 # format DF
 all_DF_view <- all_DF_view %>% 
     dplyr::mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
@@ -202,13 +202,11 @@ hom_index <- grep('^num hom alt', colnames(all_DF_view))
 # scholar
 gs <- grep('Scholar', colnames(all_DF_view))
 # select indices for different column views
-all_cols <- seq(1,ncol(all_DF_view))
-exac <- c(3, gts_index, 7, grep('exac', colnames(all_DF_view), ignore.case = T))
-neg_exac <- setdiff(all_cols, exac) - 1
-core <- c(1, gts_index, 3,5,7,8,9,15, het_index, hom_index, gs)
-neg_core <- setdiff(all_cols, core) - 1
-
-
+all_cols <- seq(1,ncol(all_DF_view)) 
+exac <- c(1, gts_index,3, 7, grep('exac', colnames(all_DF_view), ignore.case = T))
+neg_exac <- setdiff(all_cols, exac)
+core <- c(1, gts_index, 3,5,7,8,9,14, het_index, hom_index, gs) 
+neg_core <- setdiff(all_cols, core) 
 ```
 ## `r gsub('_',' ', old_sample)` {.tabset .tabset-fade}
 ### Primary Variants 
@@ -223,13 +221,13 @@ if (nrow(all_DF_view %>% filter(Priority == 'Primary')) == 0){
                   rownames = F, 
                   class='compact', 
                   extensions = c('FixedColumns','Buttons'), 
-                  options = list(columnDefs=list(list(targets=neg_core, visible = FALSE)),
+                  options = list(columnDefs=list(list(targets=neg_core-1, visible = FALSE)),
                                  pageLength = 30,
                                  dom = 'Bfrtip',
                                  buttons = list(list(extend='pageLength'),
                                                 list(extend='colvis', collectionLayout='four-column'),
-                                                list(extend='colvisGroup', text='Core Fields', hide=paste(neg_core, collapse = ','), show = paste(core, collapse = ',')),
-                                                list(extend='colvisGroup', text='ExAC', hide=paste(neg_exac,collapse = ','), show = paste(exac, collapse = ',' )),
+                                                list(extend='colvisGroup', text='Core Fields', hide=paste(neg_core-1, collapse = ','), show = paste(core-1, collapse = ',')),
+                                                list(extend='colvisGroup', text='ExAC', hide=paste(neg_exac-1,collapse = ','), show = paste(exac-1, collapse = ',' )),
                                                 list(extend='colvisGroup', text='Show All', show = ':hidden' )),
                                  columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
     DT::formatSignif(columns=c('af exac afr','af exac amr','af exac eas','af exac oth','af exac sas','an exac all','mis z','pli'),3)
@@ -254,7 +252,7 @@ if (nrow(all_DF_view %>% filter(Priority == 'Secondary')) == 0){
                                  dom = 'Bfrtip',
                                  buttons = list(list(extend='pageLength'),
                                                 list(extend='colvis', collectionLayout='four-column'),
-                                                list(extend='colvisGroup', text='Core Fields', hide=paste(neg_core, collapse = ','), show = paste(core, collapse = ',')),
+                                                list(extend='colvisGroup', text='Core Fields', hide=paste(neg_core-1, collapse = ','), show = paste(core-1, collapse = ',')),
                                                 list(extend='colvisGroup', text='ExAC', hide=paste(neg_exac,collapse = ','), show = paste(exac, collapse = ',' )),
                                                 list(extend='colvisGroup', text='Show All', show = ':hidden' )),
                                  columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
