@@ -170,12 +170,16 @@ google_link_generator <- function(var, gene){
 
 ```{r, include = FALSE}
 
-failed_read <- function (failed) {
-  failed <- tryCatch({
+failed_read <- function(failed) {
+  tryCatch({
     out <- fread(failed, header = F)
-    out <- colnames(failed) <- c('vcf_id','Priority')
-  }, error=function(e) out <- NA)
-  return(out)
+    colnames(out) <- c('vcf_id','Priority')
+    out
+  }, error=function(e) {
+    message('No failed variants')
+    return(NA)
+    }
+  )
 }
 failed <- failed_read(params$failed)
 ```
@@ -186,7 +190,9 @@ failed <- failed_read(params$failed)
 gts_index <- grep('gts',colnames(all_DF))
 colnames(all_DF)[gts_index] <- 'Genotype'
 # prep for printing
-all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, Genotype, vcf_id:Priority) %>% bind_rows(failed) %>% mutate_if(is.factor, as.character) %>% data.table()
+if (!is.na(failed)){
+  all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, Genotype, vcf_id:Priority) %>% bind_rows(failed) %>% mutate_if(is.factor, as.character) %>% data.table()
+}
 # format DF
 all_DF_view <- all_DF_view %>% 
   dplyr::mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
