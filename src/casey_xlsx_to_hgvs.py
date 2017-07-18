@@ -7,7 +7,7 @@ import subprocess
 import datetime
 import time
 
-parser = argparse.ArgumentParser(description= 'Takes in xlsx files from John Chiang / MVLGenomics Gene Panels and does the following:\n 1. Identifies hidden rows and skips these \n 2. Extracts hgvs \n\n Usage: casey_xlsx_to_hgvs.py YOURFILE.xlsx > output.tsv')
+parser = argparse.ArgumentParser(description= 'Run on eyeMac (local computer). Takes in xlsx files from John Chiang / MVLGenomics Gene Panels and does the following:\n 1. Identifies hidden rows and skips these \n 2. Extracts hgvs \n\n Usage: casey_xlsx_to_hgvs.py YOURFILE.xlsx > output.tsv')
 parser.add_argument('xlsx_file', help = 'John Chiang / OSU / MVL / Casey patient report xlsx file')
 
 args = parser.parse_args()
@@ -53,7 +53,7 @@ for row in range(header_row+1, ws.max_row):
 
 # first attempt local conversion
 print('Local Conversion Begun for ' + args.xlsx_file.split(' ')[0])
-local_conversion_results = subprocess.check_output(['/Users/mcgaugheyd/git/casey_to_gemini/hgvs_to_vcf.py','--comma', ','.join(hgvs_vars)]).decode('utf-8')
+local_conversion_results = subprocess.check_output(['/Users/mcgaugheyd/git/casey_to_gemini/src/hgvs_to_vcf.py','--comma', ','.join(hgvs_vars)]).decode('utf-8')
 
 print('VEP Conversion Begun for ' + args.xlsx_file.split(' ')[0])
 # then take the failures and run against VEP
@@ -121,7 +121,14 @@ for line in local_conversion_results.split('\n')[:-1]:
 dat_errorfile.close()
 vcf_file.close()
 
+# vt normalize
+subprocess.call(['vt','normalize', vcf_file_name, '-r', '/Users/mcgaugheyd/GenomicData/human_g1k_v37_decoy.fasta', '-o', vcf_file_name[:-4] + '.vt.vcf'])
+
 # sort, bgzip, tabix
-subprocess.call(['/Users/mcgaugheyd/git/casey_to_gemini/sort_bgzip_tabix.sh',vcf_file_name])
+subprocess.call(['/Users/mcgaugheyd/git/casey_to_gemini/src/sort_bgzip_tabix.sh', vcf_file_name[:-4] + '.vt.vcf'])
+
+# remove intermediate files
+subprocess.call(['rm', vcf_file_name])
+subprocess.call(['rm', hgvs_file_name])
 
 print('Done at ' + str(datetime.datetime.now()))
