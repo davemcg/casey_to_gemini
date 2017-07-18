@@ -204,16 +204,16 @@ all_DF_view <- all_DF_view %>%
                 variant_samples = gsub(',', ', ', as.character(variant_samples)),
                 het_samples = gsub(',', ', ', as.character(het_samples)),
                 hom_alt_samples = gsub(',', ', ', as.character(hom_alt_samples)),
-                DeleteriousMark = ifelse((impact_severity=='HIGH' | grepl('pathog', clinvar_sig)) & max_aaf_all < 0.1, 'Candidate', NA),
+                DeleteriousMark = ifelse((impact_severity=='HIGH' | grepl('pathog', clinvar_sig)) & as.numeric(max_aaf_all) < 0.1, 'Candidate', NA),
                 impact_severity = factor(impact_severity, levels = c('HIGH','MED','LOW',NA))) 
 
-all_DF_view$hvgsp = strsplit(as.character(all_DF_view$hgvsp),':')[[1]][2]
-all_DF_view$ID = link_generator('http://gnomad.broadinstitute.org/variant/',as.character(all_DF_view$ID))
-all_DF_view$clinvar_sig = clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(all_DF_view$rs_ids), as.character(all_DF_view$clinvar_sig))
-all_DF_view$rs_ids=link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(all_DF_view$rs_ids))
-all_DF_view$'Google Scholar' = google_link_generator(as.character(all_DF_view$vcf_id), as.character((all_DF_view$gene)))
-all_DF_view$gene = link_generator('https://www.omim.org/search/?search=', as.character(all_DF_view$gene))
-all_DF_view$vcf_id = link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(all_DF_view$vcf_id))
+all_DF_view$hgvsp = sapply(all_DF_view$hgvsp, function(x) strsplit(as.character(x),':')[[1]][2])
+all_DF_view$ID = sapply(all_DF_view$ID, function(x) link_generator('http://gnomad.broadinstitute.org/variant/',as.character(x)))
+all_DF_view$clinvar_sig = apply(all_DF_view, 1, function(x) clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(x['rs_ids']), as.character(x['clinvar_sig'])))
+all_DF_view$rs_ids= sapply(all_DF_view$rs_ids, function(x) link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(x)) )
+all_DF_view$'Google Scholar' = apply(all_DF_view, 1, function(x) google_link_generator(as.character(x['vcf_id']), as.character((x['gene']))) )
+all_DF_view$gene = sapply(all_DF_view$gene, function(x) link_generator('https://www.omim.org/search/?search=', as.character(x)) )
+all_DF_view$vcf_id = sapply(all_DF_view$vcf_id, function(x) link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(x)) )
 all_DF_view <- all_DF_view %>% 
   dplyr::arrange(impact_severity) %>% 
   data.table()
