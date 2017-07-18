@@ -14,4 +14,4 @@ failed=$base_path'FAILED/'$sample_ID'.FAILED.dat'
 report_name=$base_path'reports/'$sample_ID'.report.html'
 
 echo $report_name
-Rscript ~/git/casey_to_gemini/write_report.R ~/git/casey_to_gemini/prototype_output.Rmd $db $patient_vcf $failed $sample_ID $report_name
+Rscript ~/git/casey_to_gemini/src/write_report.R ~/git/casey_to_gemini/src/write_report.Rmd $db $patient_vcf $failed $sample_ID $report_name
