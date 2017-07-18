@@ -32,7 +32,7 @@ new_vcf_file_names = []
 # bgzips and tabix indexes each new TEMP file
 for one_file_name in vcf_files:
 	one_file = gzip.open(one_file_name, 'r')
-	prefix = one_file_name.split('.vcf.gz')[0]
+	prefix = one_file_name.split('.vt.vcf.gz')[0]
 	temp_file = open('/scratch/mcgaugheyd/' + prefix + '.TEMP.vcf', 'w')
 	vcf_data = one_file.read().decode('utf-8')
 	vcf_data = vcf_data.replace('SAMPLE',prefix)
@@ -57,7 +57,7 @@ subprocess.call('/home/mcgaugheyd/git/casey_to_gemini/sort_bgzip_tabix.sh ' + te
 temp_ped_file = '/scratch/mcgaugheyd/TEMP_casey_' + time_stamp + '.ped'
 temp_ped = open(temp_ped_file, 'w')
 for sample in vcf_files:
-	temp_ped.write(sample.split('.vcf.gz')[0] + ' ' + sample.split('.vcf.gz')[0] + ' 0 0 0 2\n')
+	temp_ped.write(sample.split('.vt.vcf.gz')[0] + ' ' + sample.split('.vt.vcf.gz')[0] + ' 0 0 0 2\n')
 temp_ped.close()
 
 # move temp files to current dir (GATK_vcf_to_geminiDB.sh requires this)
