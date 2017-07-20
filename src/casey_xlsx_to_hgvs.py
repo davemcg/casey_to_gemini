@@ -26,10 +26,22 @@ for row in range(2, 10):
                 Zygosity_column = cell.column
             if cell.value == 'Panel':
                 Panel_column = cell.column
+            if cell.value == 'Transcript':
+                transcript_column = cell.column
+
 # get panel type
-for row in range(header_row+1, ws.max_row):
-    if ws[Panel_column + str(row)].value is not None:
-        panel_type = ws[Panel_column + str(row)].value.replace(' ','_')
+try:
+    for row in range(header_row+1, ws.max_row):
+        if ws[Panel_column + str(row)].value is not None:
+            panel_type = ws[Panel_column + str(row)].value.replace(' ','_')
+except:
+    panel_type = ' '.join(args.xlsx_file.split(' ')[3:])
+
+# fill in value for transcript_column if missing (only OLD 2015 panels have this field)
+try:
+    transcript_column
+except:
+    transcript_column = 'D'
 
 # get HGVS and zygosity, skipping hidden rows
 hgvs_zygosity = {}
@@ -39,14 +51,15 @@ for row in range(header_row+1, ws.max_row):
     if ws.row_dimensions[row].hidden is False:
         cell_name_hgvs = "{}{}".format(HGVS_column, row)
         cell_name_zyg = "{}{}".format(Zygosity_column, row)
-        if ws[cell_name_hgvs].value is not None and ws[cell_name_hgvs].value[0:2] == 'NM':
+        cell_name_tx = "{}{}".format(transcript_column, row)
+        if ws[cell_name_hgvs].value is not None and (ws[cell_name_hgvs].value[0:2] == 'NM' or ws[cell_name_tx].value[0:2] == 'NM'):
             hgvs_zygosity[ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
             hgvs_status[ws[cell_name_hgvs].value] = 'Primary'
             hgvs_vars.append(ws[cell_name_hgvs].value)
     else:
         cell_name_hgvs = "{}{}".format(HGVS_column, row)
         cell_name_zyg = "{}{}".format(Zygosity_column, row)
-        if ws[cell_name_hgvs].value is not None and ws[cell_name_hgvs].value[0:2] == 'NM':
+        if ws[cell_name_hgvs].value is not None and (ws[cell_name_hgvs].value[0:2] == 'NM' or ws[cell_name_tx].value[0:2] == 'NM'):
             hgvs_zygosity[ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
             hgvs_status[ws[cell_name_hgvs].value] = 'Secondary'
             hgvs_vars.append(ws[cell_name_hgvs].value)
