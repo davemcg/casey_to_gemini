@@ -16,18 +16,22 @@ print('Begin processing of ' + args.xlsx_file.split(' ')[0] + ' at ' + str(datet
 wb = load_workbook(args.xlsx_file)
 ws = wb[wb.get_sheet_names()[0]]
 # identify header row, HGVS coding column, and zygosity column
-for row in range(2, 10):
-    for column in ws.iter_cols():
-        for cell in column:
-            if cell.value == 'HGVSCoding':
-                header_row = cell.row
-                HGVS_column = cell.column
-            if cell.value == 'Zygosity':
-                Zygosity_column = cell.column
-            if cell.value == 'Panel':
-                Panel_column = cell.column
-            if cell.value == 'Transcript':
-                transcript_column = cell.column
+for row in ws.iter_rows(min_row=2, max_row=10):
+    for cell in row:
+        if cell.value == 'HGVSCoding':
+            header_row = cell.row
+            HGVS_column = cell.column
+        if cell.value == 'Zygosity':
+            Zygosity_column = cell.column
+        if cell.value == 'Panel':
+            Panel_column = cell.column
+        if cell.value == 'Transcript':
+            transcript_column = cell.column
+# identify last row (John sometimes puts crap at the bottom)
+for row in range(header_row+1, ws.max_row):
+    if ws[HGVS_column + str(row)].value is None:
+        last_row = row
+        break
 
 # get panel type
 try:
@@ -35,7 +39,8 @@ try:
         if ws[Panel_column + str(row)].value is not None:
             panel_type = ws[Panel_column + str(row)].value.replace(' ','_')
 except:
-    panel_type = ' '.join(args.xlsx_file.split(' ')[3:])
+    panel_type = '_'.join(args.xlsx_file.split(' ')[3:])
+    panel_type = panel_type.replace('.xlsx','')
 
 # fill in value for transcript_column if missing (only OLD 2015 panels have this field)
 try:
@@ -47,22 +52,30 @@ except:
 hgvs_zygosity = {}
 hgvs_status = {}
 hgvs_vars = []
-for row in range(header_row+1, ws.max_row):
+for row in range(header_row+1, last_row):
+    cell_name_hgvs = "{}{}".format(HGVS_column, row)
+    cell_name_zyg = "{}{}".format(Zygosity_column, row)
+    cell_name_tx = "{}{}".format(transcript_column, row)
     if ws.row_dimensions[row].hidden is False:
-        cell_name_hgvs = "{}{}".format(HGVS_column, row)
-        cell_name_zyg = "{}{}".format(Zygosity_column, row)
-        cell_name_tx = "{}{}".format(transcript_column, row)
-        if ws[cell_name_hgvs].value is not None and (ws[cell_name_hgvs].value[0:2] == 'NM' or ws[cell_name_tx].value[0:2] == 'NM'):
-            hgvs_zygosity[ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
-            hgvs_status[ws[cell_name_hgvs].value] = 'Primary'
-            hgvs_vars.append(ws[cell_name_hgvs].value)
+        if ws[cell_name_hgvs].value is not None and ws[cell_name_tx].value is not None and (ws[cell_name_hgvs].value[0:2] == 'NM' or ws[cell_name_tx].value[0:2] == 'NM'):
+            if 'NM' not in ws[cell_name_hgvs].value:
+                 hgvs_zygosity[ws[cell_name_tx].value + ':' + ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
+                 hgvs_status[ws[cell_name_tx].value + ':' + ws[cell_name_hgvs].value] = 'Primary'
+                 hgvs_vars.append(ws[cell_name_tx].value + ':' + ws[cell_name_hgvs].value)
+            else:
+                hgvs_zygosity[ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
+                hgvs_status[ws[cell_name_hgvs].value] = 'Primary'
+                hgvs_vars.append(ws[cell_name_hgvs].value)
     else:
-        cell_name_hgvs = "{}{}".format(HGVS_column, row)
-        cell_name_zyg = "{}{}".format(Zygosity_column, row)
-        if ws[cell_name_hgvs].value is not None and (ws[cell_name_hgvs].value[0:2] == 'NM' or ws[cell_name_tx].value[0:2] == 'NM'):
-            hgvs_zygosity[ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
-            hgvs_status[ws[cell_name_hgvs].value] = 'Secondary'
-            hgvs_vars.append(ws[cell_name_hgvs].value)
+        if ws[cell_name_hgvs].value is not None and ws[cell_name_tx].value is not None and (ws[cell_name_hgvs].value[0:2] == 'NM' or ws[cell_name_tx].value[0:2] == 'NM'):
+            if 'NM' not in ws[cell_name_hgvs].value:
+                hgvs_zygosity[ws[cell_name_tx].value + ':' + ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
+                hgvs_status[ws[cell_name_tx].value + ':' + ws[cell_name_hgvs].value] = 'Secondary'
+                hgvs_vars.append(ws[cell_name_tx].value + ':' + ws[cell_name_hgvs].value)
+            else:
+                hgvs_zygosity[ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
+                hgvs_status[ws[cell_name_hgvs].value] = 'Secondary'
+                hgvs_vars.append(ws[cell_name_hgvs].value)
 
 # first attempt local conversion
 print('Local Conversion Begun for ' + args.xlsx_file.split(' ')[0])
