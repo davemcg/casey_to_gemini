@@ -40,8 +40,8 @@ for one_file_name in vcf_files:
 	one_file.close()
 	temp_file.close()
 
-	subprocess.call('bgzip -f /scratch/mcgaugheyd/' + prefix + '.TEMP.vcf', shell = True)
-	subprocess.call('tabix -f -p vcf /scratch/mcgaugheyd/' + prefix + '.TEMP.vcf.gz', shell = True)
+	subprocess.call('bgzip -f "/scratch/mcgaugheyd/' + prefix + '.TEMP.vcf"', shell = True)
+	subprocess.call('tabix -f -p vcf "/scratch/mcgaugheyd/' + prefix + '.TEMP.vcf.gz"', shell = True)
 	new_vcf_file_names.append('/scratch/mcgaugheyd/' + prefix + '.TEMP.vcf.gz')
 
 # Now merges all the vcfs into one vcf
@@ -51,7 +51,7 @@ temp_master_vcf_name = '/scratch/mcgaugheyd/TEMP_casey_VCFs_' + time_stamp + '.v
 subprocess.check_call('bcftools merge ' + ' '.join(new_vcf_file_names) + ' > ' + temp_master_vcf_name, shell = True)
 
 # Sort, bgzip, tabix
-subprocess.call('/home/mcgaugheyd/git/casey_to_gemini/sort_bgzip_tabix.sh ' + temp_master_vcf_name, shell = True)
+subprocess.call('/home/mcgaugheyd/git/casey_to_gemini/src/sort_bgzip_tabix.sh "' + temp_master_vcf_name + '"', shell = True)
 
 # create fake ped 
 temp_ped_file = '/scratch/mcgaugheyd/TEMP_casey_' + time_stamp + '.ped'
