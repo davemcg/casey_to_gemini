@@ -48,7 +48,7 @@ try:
 except:
     transcript_column = 'D'
 
-# get HGVS and zygosity, skipping hidden rows
+# get HGVS and zygosity
 hgvs_zygosity = {}
 hgvs_status = {}
 hgvs_vars = []
@@ -56,7 +56,7 @@ for row in range(header_row+1, last_row):
     cell_name_hgvs = "{}{}".format(HGVS_column, row)
     cell_name_zyg = "{}{}".format(Zygosity_column, row)
     cell_name_tx = "{}{}".format(transcript_column, row)
-    if ws.row_dimensions[row].hidden is False:
+    if ws.row_dimensions[row].hidden is False: # not hidden
         if ws[cell_name_hgvs].value is not None and ws[cell_name_tx].value is not None and (ws[cell_name_hgvs].value[0:2] == 'NM' or ws[cell_name_tx].value[0:2] == 'NM'):
             if 'NM' not in ws[cell_name_hgvs].value:
                  hgvs_zygosity[ws[cell_name_tx].value + ':' + ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
@@ -66,7 +66,7 @@ for row in range(header_row+1, last_row):
                 hgvs_zygosity[ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
                 hgvs_status[ws[cell_name_hgvs].value] = 'Primary'
                 hgvs_vars.append(ws[cell_name_hgvs].value)
-    else:
+    else: # is hidden
         if ws[cell_name_hgvs].value is not None and ws[cell_name_tx].value is not None and (ws[cell_name_hgvs].value[0:2] == 'NM' or ws[cell_name_tx].value[0:2] == 'NM'):
             if 'NM' not in ws[cell_name_hgvs].value:
                 hgvs_zygosity[ws[cell_name_tx].value + ':' + ws[cell_name_hgvs].value] = ws[cell_name_zyg].value
@@ -82,6 +82,7 @@ local_conversion_results = subprocess.check_output(['/Users/mcgaugheyd/git/casey
 print('VEP Conversion Begun for ' + args.xlsx_file.split(' ')[0])
 # then take the failures and run against VEP
 hgvs_file_name =  args.xlsx_file.split(' ')[0] + '_' + str(time.time()) + '.tmp'
+hgvs_file_name = hgvs_file_name.replace('&','and')
 hgvs_file = open(hgvs_file_name, 'w')
 successful_local_conversion_results = ''
 fail_count = 0
@@ -110,6 +111,7 @@ else:
 # check if anything failed to be included (will happen if HGVS can't be parsed)
 # write secondary vcf writing out the missing variants
 dat_error_file_name = args.xlsx_file.split(' ')[0] + '_' + panel_type + '.FAILED.dat'
+dat_error_file_name = dat_error_file_name.replace('&','and')
 dat_errorfile = open(dat_error_file_name, 'w')
 for k,v in hgvs_zygosity.items():
 	if k not in vep_vcf and k not in successful_local_conversion_results:
@@ -117,6 +119,7 @@ for k,v in hgvs_zygosity.items():
 
 # write vcf for gemini annotation, using the zygosity to write the sample genotype
 vcf_file_name = args.xlsx_file.split(' ')[0] + '_' + panel_type +  '.vcf'
+vcf_file_name = vcf_file_name.replace('&','and')
 vcf_file = open(vcf_file_name, 'w')
 
 
