@@ -110,8 +110,8 @@ if (length(secondary_IDs)>0){
 
 ```{r, include = FALSE}
 # merge together
-all_DF <- bind_rows(primary_DF, secondary_DF)
-all_IDs <- bind_rows(primary_IDs, secondary_IDs)
+all_DF <- rbind(primary_DF, secondary_DF)
+all_IDs <- rbind(primary_IDs, secondary_IDs)
 
 #find failures to match ID/vcf_id and add
 HGVS = all_IDs$HGVS
@@ -125,7 +125,7 @@ if (length(HGVS[!HGVS %in% all_DF$vcf_id]) > 0){
       quit(status = 1)
     }
     priority <- all_IDs %>% filter(HGVS==i) %>% pull(Priority)
-    all_DF <- bind_rows(all_DF, DF_maker(gemini_query(gemini_db, i, sample_name, ref, alt), priority) )
+    all_DF <- rbind(all_DF, DF_maker(gemini_query(gemini_db, i, sample_name, ref, alt), priority) )
   }
 }
 ```
