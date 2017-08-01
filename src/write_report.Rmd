@@ -100,7 +100,7 @@ if (length(primary_IDs>0)){
 }
 if (length(secondary_IDs)>0){
   secondary_DF <- DF_maker(gemini_query(gemini_db, secondary_IDs, sample_name), 'Secondary')
-  secondary_IDs <- ID_to_DF(primary_IDs, 'Secondary')
+  secondary_IDs <- ID_to_DF(secondary_IDs, 'Secondary')
 } else {
   secondary_DF <- NA
   secondary_IDs <- NA
