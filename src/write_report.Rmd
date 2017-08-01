@@ -125,7 +125,7 @@ if (length(HGVS[!HGVS %in% all_DF$vcf_id]) > 0){
       quit(status = 1)
     }
     priority <- all_IDs %>% filter(HGVS==i) %>% pull(Priority)
-    all_DF <- rbind(all_DF, DF_maker(gemini_query(gemini_db, i, sample_name, ref, alt), priority) )
+    all_DF <- bind_rows(all_DF, DF_maker(gemini_query(gemini_db, i, sample_name, ref, alt), priority) )
   }
 }
 ```
