@@ -110,8 +110,8 @@ if (length(secondary_IDs)>0){
 
 ```{r, include = FALSE}
 # merge together
-all_DF <- rbind(primary_DF, secondary_DF)
-all_IDs <- rbind(primary_IDs, secondary_IDs)
+all_DF <- bind_rows(primary_DF, secondary_DF)
+all_IDs <- bind_rows(primary_IDs, secondary_IDs)
 
 #find failures to match ID/vcf_id and add
 HGVS = all_IDs$HGVS
