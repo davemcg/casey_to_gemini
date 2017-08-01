@@ -83,11 +83,14 @@ ID_to_DF <- function(IDs, priority){
 ```
 
 ```{r, include = FALSE}
+# pull parameters for gemini db and sample name
 gemini_db <- params$master_db
 sample_name <- params$patient_ID
 print(sample_name)
 old_sample <- sample_name
+# sql doesn't accept '-'. Gemini autochanges these to _
 sample_name <- gsub('-','_', sample_name)
+# query gemini, save to df
 if (length(primary_IDs>0)){
   primary_DF <- DF_maker(gemini_query(gemini_db, primary_IDs, sample_name), 'Primary')
   primary_IDs <- ID_to_DF(primary_IDs, 'Primary')
@@ -102,7 +105,11 @@ if (length(secondary_IDs)>0){
   secondary_DF <- NA
   secondary_IDs <- NA
 }
+```
 
+
+```{r, include = FALSE}
+# merge together
 all_DF <- rbind(primary_DF, secondary_DF)
 all_IDs <- rbind(primary_IDs, secondary_IDs)
 
