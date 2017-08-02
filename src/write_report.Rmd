@@ -14,12 +14,6 @@ params:
     value: x
 ---
 
-pre {
-  width: 100%; /* 106%; */
-  left: 0; /* -60px; */
-  padding: 10px 15px 10px 15px; /* 10px 0 10px 60px; */
-}
-
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(echo = F,
