@@ -12,8 +12,15 @@ params:
     value: x
   patient_ID:
     value: x
-geometry: "left=2cm,right=2cm,top=1cm,bottom=1cm"
 ---
+
+pre {
+  width: 100%; /* 106%; */
+  left: 0; /* -60px; */
+  padding: 10px 15px 10px 15px; /* 10px 0 10px 60px; */
+}
+
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(echo = F,
                       warning = F,
