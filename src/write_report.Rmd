@@ -12,6 +12,7 @@ params:
     value: x
   patient_ID:
     value: x
+geometry: "left=2cm,right=2cm,top=1cm,bottom=1cm"
 ---
 ```{r, include = FALSE}
 knitr::opts_chunk$set(echo = F,
