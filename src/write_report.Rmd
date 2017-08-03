@@ -218,7 +218,7 @@ all_DF_view <- all_DF_view %>%
 
 all_DF_view$hgvsp = sapply(all_DF_view$hgvsp, function(x) strsplit(as.character(x),':')[[1]][2])
 all_DF_view$ID = sapply(all_DF_view$ID, function(x) link_generator('http://gnomad.broadinstitute.org/variant/',as.character(x)))
-all_DF_view$clinvar_sig = apply(all_DF_view, 1, function(x) clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(x['rs_ids']), as.character(x['clinvar_sig'])))
+all_DF_view$clinvar_sig = apply(all_DF_view, 1, function(x) clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(x['clinvar_id']), as.character(x['clinvar_sig'])))
 all_DF_view$rs_ids= sapply(all_DF_view$rs_ids, function(x) link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(x)) )
 all_DF_view$'Google Scholar' = apply(all_DF_view, 1, function(x) google_link_generator(as.character(x['vcf_id']), as.character((x['gene']))) )
 all_DF_view$gene = sapply(all_DF_view$gene, function(x) link_generator('https://www.omim.org/search/?search=', as.character(x)) )
