@@ -65,7 +65,7 @@ subprocess.check_call(['cp', temp_ped_file, '.'])
 subprocess.check_call(['cp', temp_master_vcf_name + '.gz', '.'])
 
 # create db
-subprocess.call('sbatch --partition=quick --cpus-per-task 16 /home/mcgaugheyd/git/variant_prioritization/GATK_vcf_to_geminiDB.sh ' + temp_master_vcf_name.split('/')[-1] + '.gz ' + temp_ped_file.split('/')[-1] + ' ' + args.gemini_db_name, shell = True)
+subprocess.call('sbatch --partition=quick --cpus-per-task 16 /home/mcgaugheyd/git/variant_prioritization/GATK_vcf_to_geminiDB.sh ' + temp_master_vcf_name.split('/')[-1] + '.gz ' + temp_ped_file.split('/')[-1] + ' ' + args.gemini_db_name + ' Canonical', shell = True)
 
 # remove temp files
 subprocess.call(['rm',temp_ped_file])
