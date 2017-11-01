@@ -1,7 +1,7 @@
 #!/bin/bash
 
-module load R/3.4.0_gcc-6.2.0
-module load gemini/0.19.0
+module load R/3.4.0_gcc-4.9.1
+module load gemini/0.20.1
 
 master_gemini_db=$1
 sample_ID=$2
