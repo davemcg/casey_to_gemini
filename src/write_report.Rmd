@@ -1,14 +1,13 @@
 ---
 date: '`r strftime(Sys.time(), format = "%B %d, %Y")`'
+title: 'MGOG Analysis'
 output: 
   html_document:
     css: datatable_fix.css
 params:
-  master_db:
+  gemini_return:
     value: x
-  patient_vcf:
-    value: x
-  failed:
+  patient_MVL_excel:
     value: x
   patient_ID:
     value: x
@@ -22,114 +21,16 @@ knitr::opts_chunk$set(echo = F,
 ```
 
 ```{r, include = FALSE}
-library(rmarkdown)
 library(data.table)
 library(dplyr)
 library(tidyr)
-#gemini_db <- 'test_40.db'
-#file <- '17-1012_RD_v11_assay.VEP.GRCh37.anno.vcf.gz'
-#setwd('/data/mcgaugheyd/projects/nei/hufnagel/casey_panels/test2')
-
-# read in vcf to count number of header rows to skip
-file = params$patient_vcf
-con <- file(file, open = 'r')
-data <- readLines(con)
-row_skip <- sum(sapply(data, function(x) ifelse(substr(x,1,2)=='##', 1,0)))
-# now use fread to pull in vcf, skipping header rows
-vcf <- fread(paste('zcat', file), skip=row_skip)
-id_status <- vcf %>% dplyr::select(`#CHROM`, POS, ID, REF, ALT, SAMPLE) %>% tidyr::separate(SAMPLE, c('GT', 'CT', 'JC'), ':')
-
-primary_IDs <- id_status %>% dplyr::filter(JC=='Primary') %>% .[['ID']]
-secondary_IDs <- id_status %>% dplyr::filter(JC=='Secondary') %>% .[['ID']]
-
-gemini_query <- function(gemini_db, vcf_id, sample_name, ref, alt){
-  # Queries gemini in two ways:
-  ## With the HGVS as the search term
-  ## If ref, alt given, then uses HGVS as a fuzzy match and ref alt to confirm
-  base_query <- "gemini query --show-samples --header -q 'select chrom, start, end, ref, alt, vcf_id, hgvsc, hgvsp, type, gene, impact, impact_severity, rs_ids, pfam_domain, clinvar_diseases, clinvar_ID, clinvar_pathogenic, clinvar_sig, hgmd_overlap, num_het, num_hom_alt, max_aaf_all, af_exac_afr, af_exac_all af_exac_amr, af_exac_eas, af_exac_nfe af_exac_oth, af_exac_sas, an_exac_all, exac_num_het, exac_num_hom_alt, mis_z, pli, gerp_elements, polyphen_pred, polyphen_score, sift_pred, sift_score, cadd_phred FROM variants "
-  base_query <- gsub(' FROM', paste0(', gts.', sample_name, ' FROM'), base_query)
-  if (missing(ref) & missing(alt)){
-    out <- system(paste0(base_query,
-                         "WHERE vcf_id IN (", 
-                         paste0('\"',vcf_id, '\"', collapse=','), ") ' ", 
-                         gemini_db), 
-                  intern=TRUE) 
-  }
-  else {
-    out <- system(paste0(base_query,
-                         "WHERE vcf_id LIKE ", 
-                         paste0('\"%',vcf_id, '%\"', collapse=','), 
-                         " AND ref IS \"", ref, 
-                         "\" AND alt IS \"", alt,"\"' ", 
-                         gemini_db), 
-                  intern=TRUE) 
-  }
-  return(out)
-}
-
-DF_maker <- function(df_vector, priority){
-  # Converts character vector of gemini captured call into a data frame
-  DF <- data.frame(do.call(rbind, strsplit(df_vector, '\t')))
-  colnames(DF) <- as.character(unlist(DF[1,]))
-  DF <- DF[-1,] 
-  DF$Priority <- priority
-  return(DF)
-}
-ID_to_DF <- function(IDs, priority){
-  # Converts ID (HGVS) vector to data frame with status 
-  id_DF <- data.frame(IDs)
-  id_DF$Priority <- priority
-  colnames(id_DF)[1] <- 'HGVS'
-  return(id_DF)
-}
-```
-
-```{r, include = FALSE}
-# pull parameters for gemini db and sample name
-gemini_db <- params$master_db
-sample_name <- params$patient_ID
-print(sample_name)
-old_sample <- sample_name
-# sql doesn't accept '-'. Gemini autochanges these to _
-sample_name <- gsub('-','_', sample_name)
-# query gemini, save to df
-if (length(primary_IDs>0)){
-  primary_DF <- DF_maker(gemini_query(gemini_db, primary_IDs, sample_name), 'Primary')
-  primary_IDs <- ID_to_DF(primary_IDs, 'Primary')
-} else {
-  primary_DF <- NA
-  primary_IDs <- NA
-}
-if (length(secondary_IDs)>0){
-  secondary_DF <- DF_maker(gemini_query(gemini_db, secondary_IDs, sample_name), 'Secondary')
-  secondary_IDs <- ID_to_DF(secondary_IDs, 'Secondary')
-} else {
-  secondary_DF <- NA
-  secondary_IDs <- NA
-}
-```
+library(rmarkdown)
 
 
-```{r, include = FALSE}
-# merge together
-all_DF <- rbind(primary_DF, secondary_DF)
-all_IDs <- rbind(primary_IDs, secondary_IDs)
-
-#find failures to match ID/vcf_id and add
-HGVS = all_IDs$HGVS
-if (length(HGVS[!HGVS %in% all_DF$vcf_id]) > 0){
-  for (i in HGVS[!HGVS %in% all_DF$vcf_id]){
-    ref <- id_status %>% filter(ID==i) %>% .[['REF']]
-    alt <- id_status %>% filter(ID==i) %>% .[['ALT']]
-    query_result <- gemini_query(gemini_db, i, sample_name, ref, alt)
-    if (length(query_result) != 2) {
-      # if multiple results returned, just take first one
-      query_result <- query_result[c(1,2)]
-    }
-    priority <- all_IDs %>% filter(HGVS==i) %>% pull(Priority)
-    all_DF <- rbind(all_DF, DF_maker(gemini_query(gemini_db, i, sample_name, ref, alt), priority) )
-  }
-}
+# import in gemini output from Snakefile
+gem <- fread(params$gemini_return)
+mvl_excel <- fread(params$patient_MVL_excel, header = F)
+colnames(mvl_excel) <- c('HGVS','Priority','Rs_ids')#,'chrom','pos')
 ```
 
 ```{r, include = F}
@@ -175,40 +76,31 @@ google_link_generator <- function(var, gene){
   }
   return(output)
 }
-```
 
-```{r, include = FALSE}
-
-failed_read <- function(failed) {
-  tryCatch({
-    out <- fread(failed, header = F)
-    colnames(out) <- c('vcf_id','Priority')
-    out
-  }, error=function(e) {
-    message('No failed variants file')
-    return(NA)
-    }
+hgvs_matcher <- function(hgvs, DF){
+  # returns rows from the DF which fuzzy match the hgvs (the tx is stripped off)
+  # and the c.dot part is searched on the entire row
+  cdot <- strsplit(hgvs, ':')[[1]][2]
+  rows <- which(
+    rowSums(
+      `dim<-`(grepl(cdot, as.matrix(DF), fixed=TRUE), dim(DF))
+    ) > 0
   )
+  rows
 }
-failed <- failed_read(params$failed)
 ```
-
 
 ```{r, include=F}
 # find gt index
-gts_index <- grep('gts',colnames(all_DF))
-colnames(all_DF)[gts_index] <- 'Genotype'
+gts_index <- grep('gts',colnames(gem))
+colnames(gem)[gts_index] <- 'Genotype'
+
 # prep for printing
-## if failed file doesn't exist, then don't bind rows with it 
-## otherwise merge data with failed hgvs
-if (is.na(failed_read(params$failed))){
-  all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, Genotype, vcf_id:Priority) %>% mutate_if(is.factor, as.character) %>% data.table()
-} else { 
-  all_DF_view <- all_DF %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, Genotype, vcf_id:Priority) %>% bind_rows(failed) %>% mutate_if(is.factor, as.character) %>% data.table()
-}
+gem_view <- gem %>% mutate(ID=paste(chrom,end,ref,alt,sep='-')) %>% select(ID, Genotype, vcf_id:hom_alt_samples) %>% mutate_if(is.factor, as.character) %>% data.table()
+
 
 # format DF
-all_DF_view <- all_DF_view %>% 
+gem_view <- gem_view %>% 
   dplyr::mutate(clinvar_diseases = gsub('\\|',' ', as.character(clinvar_diseases)),
                 variant_samples = gsub(',', ', ', as.character(variant_samples)),
                 het_samples = gsub(',', ', ', as.character(het_samples)),
@@ -216,41 +108,50 @@ all_DF_view <- all_DF_view %>%
                 DeleteriousMark = ifelse((impact_severity=='HIGH' | grepl('pathog', clinvar_sig)) & as.numeric(max_aaf_all) < 0.1, 'Candidate', NA),
                 impact_severity = factor(impact_severity, levels = c('HIGH','MED','LOW',NA))) 
 
-all_DF_view$hgvsp = sapply(all_DF_view$hgvsp, function(x) strsplit(as.character(x),':')[[1]][2])
-all_DF_view$ID = sapply(all_DF_view$ID, function(x) link_generator('http://gnomad.broadinstitute.org/variant/',as.character(x)))
-all_DF_view$clinvar_sig = apply(all_DF_view, 1, function(x) clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(x['clinvar_id']), as.character(x['clinvar_sig'])))
-all_DF_view$rs_ids= sapply(all_DF_view$rs_ids, function(x) link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(x)) )
-all_DF_view$'Google Scholar' = apply(all_DF_view, 1, function(x) google_link_generator(as.character(x['vcf_id']), as.character((x['gene']))) )
-all_DF_view$gene = sapply(all_DF_view$gene, function(x) link_generator('https://www.omim.org/search/?search=', as.character(x)) )
-all_DF_view$vcf_id = sapply(all_DF_view$vcf_id, function(x) link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(x)) )
-all_DF_view <- all_DF_view %>% 
+gem_view$hgvsp = sapply(gem_view$hgvsp, function(x) strsplit(as.character(x),':')[[1]][2])
+gem_view$ID = sapply(gem_view$ID, function(x) link_generator('http://gnomad.broadinstitute.org/variant/',as.character(x)))
+gem_view$clinvar_sig = apply(gem_view, 1, function(x) clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(x['clinvar_id']), as.character(x['clinvar_sig'])))
+gem_view$rs_ids= sapply(gem_view$rs_ids, function(x) link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(x)) )
+gem_view$'Google Scholar' = apply(gem_view, 1, function(x) google_link_generator(as.character(x['vcf_id']), as.character((x['gene']))) )
+gem_view$gene = sapply(gem_view$gene, function(x) link_generator('https://www.omim.org/search/?search=', as.character(x)) )
+#gem_view$vcf_id = sapply(gem_view$vcf_id, function(x) link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(x)) )
+gem_view <- gem_view %>% 
   dplyr::arrange(impact_severity) %>% 
   data.table()
-colnames(all_DF_view) <- gsub('_', ' ', colnames(all_DF_view))
+colnames(gem_view) <- gsub('_', ' ', colnames(gem_view))
 
-gts_index <- grep('Genotype',colnames(all_DF_view))
-max_aaf_all <- grep('max aaf all', colnames(all_DF_view))
+gts_index <- grep('Genotype',colnames(gem_view))
+max_aaf_all <- grep('max aaf all', colnames(gem_view))
 # find cohort counts
-het_index <- grep('^num het', colnames(all_DF_view))
-hom_index <- grep('^num hom alt', colnames(all_DF_view))
+het_index <- grep('^num het', colnames(gem_view))
+hom_index <- grep('^num hom alt', colnames(gem_view))
 # scholar
-gs <- grep('Scholar', colnames(all_DF_view))
+gs <- grep('Scholar', colnames(gem_view))
 # select indices for different column views
-all_cols <- seq(1,ncol(all_DF_view)) 
-exac <- c(1, gts_index, 3, 7, grep('exac', colnames(all_DF_view), ignore.case = T))
+all_cols <- seq(1,ncol(gem_view)) 
+exac <- c(1, gts_index, 3, 7, grep('exac', colnames(gem_view), ignore.case = T))
 neg_exac <- setdiff(all_cols, exac)
 core <- c(1, gts_index, 3,5,7,8,9,10,15, max_aaf_all, het_index, hom_index, gs) 
 neg_core <- setdiff(all_cols, core) 
 ```
-## `r gsub('_',' ', old_sample)` {.tabset .tabset-fade}
+
+## `r params$patient_ID` {.tabset}
 
 ### Primary Variants
 ```{r}
-if (nrow(all_DF_view %>% filter(Priority == 'Primary')) == 0){
+if (nrow(mvl_excel %>% filter(Priority == 'Primary')) == 0){
   out <- 'No primary variants'
 } else {
-  out <- all_DF_view %>% 
-    dplyr::filter(Priority == 'Primary') %>% 
+  hgvs_location <- data.frame()
+  for (i in mvl_excel %>% filter(Priority=='Primary') %>% pull(HGVS)) {
+    row_return <- hgvs_matcher(i, gem_view)
+    hgvs_primary <- i
+    if (length(row_return)==0){
+        row_return=NA
+    }
+    hgvs_location <- rbind(hgvs_location, cbind(hgvs_primary, row_return))
+  }
+  out <- gem_view[as.numeric(hgvs_location$row_return),] %>% 
     dplyr::arrange(DeleteriousMark, `impact severity`) %>% 
     DT::datatable(width=1200, 
                   escape = FALSE,
@@ -269,17 +170,17 @@ if (nrow(all_DF_view %>% filter(Priority == 'Primary')) == 0){
                                  columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
     DT::formatSignif(columns=c('max aaf all','af exac afr','af exac amr','af exac eas','af exac oth','af exac sas','an exac all','mis z','pli'),3) %>% 
     DT::formatStyle(columns = c('DeleteriousMark'), target = 'row', backgroundColor = DT::styleEqual(c(NA, 'Candidate'), c('#fcfcfa', '#ffd3d3')))
+}
+if (sum(is.na(hgvs_location$row_return)) > 0){
+  print(paste('Failed to match the following MVL high priority variants: ', paste(as.character(hgvs_location[is.na(hgvs_location$row_return),'hgvs_primary']), collapse=', ')))
 }
 out
 ```
 
 ### Secondary Variants
 ```{r}
-if (nrow(all_DF_view %>% filter(Priority == 'Secondary')) == 0){
-  out <- 'No secondary variants'
-} else {
-  out <- all_DF_view %>% 
-    dplyr::filter(Priority == 'Secondary') %>% 
+
+  out <- gem_view[-as.numeric(hgvs_location$row_return[!is.na(hgvs_location$row_return)]),] %>% 
     dplyr::arrange(DeleteriousMark, `impact severity`) %>% 
     DT::datatable(width=1200, 
                   escape = FALSE,
@@ -298,7 +199,7 @@ if (nrow(all_DF_view %>% filter(Priority == 'Secondary')) == 0){
                                  columnDefs=list(list(targets=c(1), class="dt-left")))) %>% 
     DT::formatSignif(columns=c('max aaf all','af exac afr','af exac amr','af exac eas','af exac oth','af exac sas','an exac all','mis z','pli'),3) %>% 
     DT::formatStyle(columns = c('DeleteriousMark'), target = 'row', backgroundColor = DT::styleEqual(c(NA, 'Candidate'), c('#fcfcfa', '#ffd3d3')))
-}
+
 out
 ```
 
@@ -306,21 +207,28 @@ out
 
 This report is auto-generated with scripts written by David McGaughey. This report was created on `r strftime(Sys.time(), format = "%B %d, %Y")`
 
+The code that processes the data and generates the reports is at https://github.com/davemcg/casey_to_gemini/
+
+The base information for this report is the MVL-provided vcf, which contains all variants called for the sample. The vcf is reprocessed with [vt](https://genome.sph.umich.edu/wiki/Vt) to left-align the variants and split multi-allelics onto separate lines. All OGVFB vcfs from MVL are then aggregated into one master vcf, which is re-annotated with data sources useful for our cohohrt. The annotated vcf is loaded into [Gemini](http://gemini.readthedocs.io) and each sample is queried against the Gemini database to produce a table containing information in this report. The reactive report itself is written with R markdown. 
+
 **FAQ**:
 
-- What does it mean if a variant is marked in red?
-  - This means that the variant has an impact severity of ['HIGH'](http://gemini.readthedocs.io/en/latest/content/database_schema.html#details-of-the-impact-and-impact-severity-columns) **or** is marked as pathogenic in ClinVar **and** has a population allele frequency less than 10%. 
+* What is the Primary / Secondary distinction?
+    * Primary variants are those that are labeled by MVL as being potentially causative for the disease. Secondary are the remaining variants. 
+* What does it mean if a variant is marked in red?
+    * This means that the variant has an impact severity of ['HIGH'](http://gemini.readthedocs.io/en/latest/content/database_schema.html#details-of-the-impact-and-impact-severity-columns) **or** is marked as pathogenic in ClinVar **and** has a population allele frequency less than 10%. 
 
 **WARNINGS/LIMITATIONS** 
 
 This report *may* have mistakes and omissions including, but not limited to:
 
-- Incorrect HGVS conversion to genomic coordinates which can result in the incorrect genotype for a variant
-- Dropping of variants from the original .xlsx file
-- Only variants from the .xlsx can be included - CNV/etc. analyses will not be reported. 
-- Heterygous (num het) and Homozygous Alternative (num hom alt) allele counts **do not have a denominator** as we have no way which samples in the OGVFB cohort have the reference genotype
+- Failure to identify the MVL marked likely variants (marked in red on the excel sheet)
+- Inconsistent variant position and representation between the MVL excel file and this report
+- Only variants from the vcf are included - CNV/etc. analyses will not be reported. 
+- Heterygous (num het) and Homozygous Alternative (num hom alt) allele counts **do not have a denominator** as we have no way which to know which samples in the OGVFB cohort have the reference genotype
 
-The definitive source of the genotype calls and analysis are the original.xlsx file and MVL/John Chiang clinical report, respectively
+The definitive (CLIA) source of the genotype calls and analysis are the original.xlsx file and MVL/John Chiang clinical report, respectively
+
 
 
 

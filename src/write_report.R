@@ -2,11 +2,11 @@
 args = commandArgs(trailingOnly=TRUE)
 library(rmarkdown)
 render(args[1],
-		output_file = args[6],
-		output_format = 'html_document',
+  output_file = args[5],
+  output_format = 'html_document',
         params = list(
-        	master_db = args[2],
-            patient_vcf = args[3],
-			failed = args[4],
-			patient_ID = args[5]),
-		encoding = 'utf-8')
+          gemini_return = args[2],
+          patient_MVL_excel = args[3],
+   patient_ID = args[4]),
+  encoding = 'utf-8')
+
