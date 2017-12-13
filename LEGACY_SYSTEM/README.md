@@ -1,5 +1,5 @@
 # casey_to_gemini
-Process to automate creation of a Gemini database from Casey Eye Institute files
+Process to (semi) automate creation of a Gemini database from Casey Eye Institute files
 
 1. On eyeMac (local desktop) run `/git/casey_to_gemini/src/casey_xlsx_to_hgvs.py EXCEL_FILE` which uses the Casey / MVL excel file to parse for HGVS and output a vcf-like file (along with helper files `*FAILED.dat` which lists HGVS variants which couldn't be converted
 2. Upload the new vcf and the `*FAILED.dat` files created by `/git/casey_to_gemini/src/casey_xlsx_to_hgvs.py` to `biowulf2:/data/mcgaugheyd/projects/nei/hufnagel/casey_panels/vcf` and `biowulf2:/data/mcgaugheyd/projects/nei/hufnagel/casey_panels/FAILED`, respectively
