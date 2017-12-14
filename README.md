@@ -14,3 +14,5 @@ Then run the Snakefile workflow as follows on biowulf2 in /data/OGVFB/MVL_proces
 Reports will be automatically generated and written to /data/OGVFB/MVL_processing/MGOG_reports 
 
 The Gemini database generated is stored in /data/OGVFB/MVL_processing/gemini_db
+
+<img src="./src/dag.svg">
