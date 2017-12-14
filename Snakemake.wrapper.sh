@@ -18,10 +18,10 @@ sbcmd="sbatch --cpus-per-task={threads} \
 {cluster.extra}"
 
 
-snakemake -s /home/mcgaugheyd/git/casey_to_gemini/Snakefile \
+snakemake -s /home/$USER/git/casey_to_gemini/Snakefile \
 -pr --local-cores 2 --jobs 1999 \
 --directory /data/OGVFB/MVL_processing \
---cluster-config /home/mcgaugheyd/git/casey_to_gemini/cluster.json \
+--cluster-config /home/$USER/git/casey_to_gemini/cluster.json \
 --cluster "$sbcmd"  --latency-wait 120 --rerun-incomplete \
 -k \
 --resources parallel=2
