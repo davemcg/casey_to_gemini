@@ -1,6 +1,6 @@
-gemini_db_name: 'gemini_db/MVL_2017-12-12.gemini.db'
+gemini_db_name: 'gemini_db/MVL_2017-12-14.gemini.db'
 samtools_version: 'samtools/1.6'
-ref_genome: '/fdb/GATK_resource_bundle/b37-2.8/human_g1k_v37_decoy.fasta'
+ref_genome: '/data/OGVFB/resources/human_g1k_v37_decoy.fasta'
 VEP_version: 'VEP/89'
 vcfanno_version: 'vcfanno/0.1.1'
 vcfanno_lua: '/home/$USER/git/casey_to_gemini/src/vcfanno_custom.lua'
