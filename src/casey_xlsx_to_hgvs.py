@@ -19,10 +19,16 @@ for row in ws.iter_rows(min_row=2, max_row=20):
 			HGVS_column = cell.column
 		if str(cell.value).upper() == 'RS':
 			Rs_column = cell.column
-#		if str(cell.value).upper() == 'CHROMOSOME':
-#			Chr_column = cell.column
-#		if str(cell.value).upper() == 'CHROMOSOMEPOSITION':
-#			pos_column = cell.column
+		if str(cell.value).upper() == 'CHR:CHRPOS':
+			Chr_column = cell.column
+		if str(cell.value).upper() == 'TIMESOBSERVEDPERPANEL':
+			panel_column = cell.column
+		if str(cell.value).upper() == 'TIMESOBSERVEDPERPANELGROUP':
+			group_column = cell.column
+		if str(cell.value).upper() == 'REF':
+			ref_column = cell.column
+		if str(cell.value).upper() == 'ALT':
+			alt_column = cell.column
 
 # identify last row
 for row in range(header_row+1, max(ws.max_row, 5000)):
@@ -33,8 +39,12 @@ for row in range(header_row+1, max(ws.max_row, 5000)):
 hgvs = [] # the actual hgvs
 hgvs_status = [] # if red, then considered disease causing by John / MVL
 rs = []
-#chrom = []
-#pos = []
+chrom_pos = []
+panel = []
+group = []
+ref = []
+alt = []
+
 for row in range(header_row+1, last_row):
 	hgvs_cell = "{}{}".format(HGVS_column, row)
 	hgvs_cell_value = ws[hgvs_cell].value
@@ -44,10 +54,12 @@ for row in range(header_row+1, last_row):
 	else:
 		hgvs_status.append('Primary')
 	rs.append(ws["{}{}".format(Rs_column, row)].value)
-#	chrom.append(ws["{}{}".format(Chr_column, row)].value)
-#	pos.append(ws["{}{}".format(pos_column, row)].value)
-
+	chrom_pos.append(ws["{}{}".format(Chr_column, row)].value)
+	panel.append(ws["{}{}".format(panel_column, row)].value)
+	group.append(ws["{}{}".format(group_column, row)].value)
+	ref.append(ws["{}{}".format(ref_column, row)].value)
+	alt.append(ws["{}{}".format(alt_column, row)].value)
 
 # print out hgvs and status (primary or secondary)
 for i in range(1, len(hgvs)):
-	print(hgvs[i], hgvs_status[i], rs[i]) #, chrom[i], pos[i])
+	print(hgvs[i], hgvs_status[i], rs[i], chrom_pos[i], ref[i], alt[i], panel[i], group[i])
