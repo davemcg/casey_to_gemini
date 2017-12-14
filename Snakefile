@@ -127,7 +127,7 @@ rule VEP_annotate:
 			--format vcf \
 			--output_file {output.vcf} \
 			--plugin Grantham \
-			--plugin MaxEntScan,/home/mcgaugheyd/bin/MaxEntScan \
+			--plugin MaxEntScan,/data/OGVFB/resources/MaxEntScan \
 			--plugin CADD,/fdb/CADD/1.3/prescored/whole_genome_SNVs.tsv.gz,/fdb/CADD/1.3/prescored/InDels.tsv.gz \
 			--canonical \
 			--ccds \
@@ -190,7 +190,7 @@ rule query_gemini:
 		module load {config[samtools_version]}
 		sample=`bcftools query -l {input.input_vcf} | sed 's/-/_/g'`
 		module load {config[gemini_version]}
-		gemini query --show-samples --header -q "select chrom, start, end, ref, alt, vcf_id, hgvsc, hgvsp, type, gene, impact, impact_severity, rs_ids, pfam_domain, clinvar_diseases, clinvar_ID, clinvar_pathogenic, clinvar_sig, hgmd_overlap, num_het, num_hom_alt, max_aaf_all, af_exac_afr, af_exac_all, af_exac_amr, af_exac_eas, af_exac_nfe, af_exac_oth, af_exac_sas, an_exac_all, exac_num_het, exac_num_hom_alt, mis_z, pli, gerp_elements, polyphen_pred, polyphen_score, sift_pred, sift_score, cadd_phred, gts.$sample FROM variants" --gt-filter "gt_types.$sample == HET or gt_types.$sample == HOM_ALT" {input.db} > {output}  
+		gemini query --show-samples --header -q "select chrom, start, end, ref, alt, vcf_id, hgvsc, hgvsp, type, gene, impact, impact_severity, rs_ids, pfam_domain, clinvar_diseases, clinvar_ID, clinvar_pathogenic, clinvar_sig, hgmd_overlap, num_het, num_hom_alt, max_aaf_all, af_exac_afr, af_exac_all, af_exac_amr, af_exac_eas, af_exac_nfe, af_exac_oth, af_exac_sas, an_exac_all, exac_num_het, exac_num_hom_alt, mis_z, pli, gerp_elements, polyphen_pred, polyphen_score, sift_pred, sift_score, cadd_phred, gt_depths.$sample, gts.$sample, gt_quals.$sample FROM variants" --gt-filter "gt_types.$sample == HET or gt_types.$sample == HOM_ALT" {input.db} > {output}  
 		"""
 
 rule MVL_excel_sheet_query:
