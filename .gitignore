@@ -5,6 +5,6 @@
 *.swp
 *.ped
 *.txt
-
+.snakemake
 
 .xlsx_to_geminiDB.py.swp
