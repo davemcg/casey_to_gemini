@@ -3,6 +3,13 @@ from os.path import join
 
 configfile: '/home/mcgaugheyd/git/casey_to_gemini/config.yaml'
 
+
+def find_excel_sheet_match(wildcards):
+	import glob
+	sample = str(wildcards).split('_')[0]
+	excel_file = glob.glob('excel_report/' + sample + '*')[0]
+	return(excel_file)
+
 (ALL_SAMPLES, END) = glob_wildcards(join('vcf/', '{sample}.vc{end}'))
 (NEW_SAMPLES, ) = glob_wildcards(join('vcf/', '{sample}.vcf'))
 (EXISTING_SAMPLES, ) = glob_wildcards(join('vcf/', '{sample}.vcf.gz'))
@@ -176,7 +183,7 @@ rule query_gemini:
 		db = config['gemini_db_name'],
 		input_vcf = 'vcf/{sample}.vcf'
 	output:
-		('temp/{sample}/annotated_variants')
+		temp('temp/{sample}/annotated_variants')
 	shell:
 		"""
 		export REF_CACHE=/scratch/$SLURM_JOB_ID/
@@ -188,16 +195,12 @@ rule query_gemini:
 
 rule MVL_excel_sheet_query:
 	input:
-		'vcf/{sample}.vcf'
+		find_excel_sheet_match
 	output:
-		intermediate=temp('temp/{sample}/TEMP'),
-		info=('temp/{sample}/mvl_sheet_info')
+		temp('temp/{sample}/mvl_sheet_info')
 	shell:
 		"""
-		# ugly bash code to find matching excel sheet
-		find excel_report/ -type f | grep `echo {wildcards.sample} | cut -f1 -d'_' ` | grep xlsx$ > {output.intermediate}
-		excel_sheet=`head -n 1 {output.intermediate}`
-		/usr/local/Anaconda/envs/py3.4/bin/python3 /home/mcgaugheyd/git/casey_to_gemini/src/casey_xlsx_to_hgvs.py $excel_sheet > {output.info}
+		/usr/local/Anaconda/envs/py3.4/bin/python3 /home/mcgaugheyd/git/casey_to_gemini/src/casey_xlsx_to_hgvs.py {input} > {output}
 		"""
 
 rule write_report:
