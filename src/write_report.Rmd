@@ -31,7 +31,7 @@ library(rmarkdown)
 gem <- fread(params$gemini_return)
 mvl_excel <- fread(params$patient_MVL_excel, header = F)
 colnames(mvl_excel) <- c('HGVS','Priority','Rs_ids', 'ChromPos', 'Ref', 'Alt', 'TimesObservedPerPanel', 'TimesObservedPerPanelGroup')
-mvl_excel <- mvl_excel %>% separate(ChromPos, c('chrom','end')) %>% mutate(ref=Ref, alt=Alt, end=as.numeric(end))
+mvl_excel <- mvl_excel %>% separate(ChromPos, c('chrom','end')) %>% mutate(chrom=as.character(chrom), ref=Ref, alt=Alt, end=as.numeric(end))
 
 # join gemini annotated data with mvl info by chrom pos ref alt
 gem <- gem %>% left_join(., mvl_excel, by = c('chrom','end','ref','alt'))
