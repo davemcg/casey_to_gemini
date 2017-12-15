@@ -144,6 +144,8 @@ gem_view <- gem_view %>%
                 variant_samples = gsub(',', ', ', as.character(variant_samples)),
                 het_samples = gsub(',', ', ', as.character(het_samples)),
                 hom_alt_samples = gsub(',', ', ', as.character(hom_alt_samples)),
+                `Times Observed Per Panel` = as.numeric(TimesObservedPerPanel),
+                `Times Observed Per Panel Group` = as.numeric(TimesObservedPerPanelGroup),
                 DeleteriousMark = ifelse((impact_severity=='HIGH' | grepl('pathog', clinvar_sig)) & as.numeric(max_aaf_all) < 0.1, 'Candidate', NA),
                 impact_severity = factor(impact_severity, levels = c('HIGH','MED','LOW',NA))) 
 
@@ -164,8 +166,8 @@ max_aaf_all <- grep('max aaf all', colnames(gem_view))
 # find cohort counts
 het_index <- grep('^num het', colnames(gem_view))
 hom_index <- grep('^num hom alt', colnames(gem_view))
-times_panel <- grep('TimesObservedPerPanel$', colnames(gem_view), ignore.case = T)
-group_panel <- grep('TimesObservedPerPanelGroup', colnames(gem_view), ignore.case = T)
+times_panel <- grep('Times Observed Per Panel$', colnames(gem_view), ignore.case = T)
+group_panel <- grep('Times Observed Per Panel Group', colnames(gem_view), ignore.case = T)
 # scholar
 gs <- grep('Scholar', colnames(gem_view))
 # select indices for different column views
@@ -216,7 +218,7 @@ out
 ```{r}
 
 out <- gem_view %>% 
-  dplyr::filter(Priority == 'Seoncdary' | is.na(Priority)) %>% 
+  dplyr::filter(Priority == 'Secondary' | is.na(Priority)) %>% 
   dplyr::arrange(DeleteriousMark, `impact severity`) %>% 
   DT::datatable(width=1200, 
                 escape = FALSE,
