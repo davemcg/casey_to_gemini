@@ -28,7 +28,7 @@ library(rmarkdown)
 
 
 # import in gemini output from Snakefile
-gem <- fread(params$gemini_return)
+gem <- fread(params$gemini_return) %>% mutate(chrom=as.character(chrom))
 mvl_excel <- fread(params$patient_MVL_excel, header = F)
 colnames(mvl_excel) <- c('HGVS','Priority','Rs_ids', 'ChromPos', 'Ref', 'Alt', 'TimesObservedPerPanel', 'TimesObservedPerPanelGroup')
 mvl_excel <- mvl_excel %>% separate(ChromPos, c('chrom','end')) %>% mutate(chrom=as.character(chrom), ref=Ref, alt=Alt, end=as.numeric(end))
