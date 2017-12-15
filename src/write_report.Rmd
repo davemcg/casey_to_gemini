@@ -72,7 +72,7 @@ for (i in mvl_noMatch$HGVS){
 }
 
 for (i in mvlHGVS_gemROW[!is.na(mvlHGVS_gemROW$match),]$i){
-  if (!is.na(match)){
+  if (!is.na(match) & (mvl_excel %>% filter(HGVS==i) %>% nrow)==1){
     gem[i,'Priority'] <- mvl_excel %>% filter(HGVS==i) %>% pull(Priority)
     gem[i,'HGVS'] <- mvl_excel %>% filter(HGVS==i) %>% pull(HGVS)
     gem[i,'TimesObservedPerPanel'] <- mvl_excel %>% filter(HGVS==i) %>% pull(TimesObservedPerPanel)
