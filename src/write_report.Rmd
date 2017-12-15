@@ -153,7 +153,7 @@ gem_view$hgvsp = sapply(gem_view$hgvsp, function(x) strsplit(as.character(x),':'
 gem_view$ID = sapply(gem_view$ID, function(x) link_generator('http://gnomad.broadinstitute.org/variant/',as.character(x)))
 gem_view$clinvar_sig = apply(gem_view, 1, function(x) clinvar_link_generator('https://www.ncbi.nlm.nih.gov/clinvar?term=',as.character(x['clinvar_id']), as.character(x['clinvar_sig'])))
 gem_view$rs_ids= sapply(gem_view$rs_ids, function(x) link_generator('https://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=',as.character(x)) )
-gem_view$'Google Scholar' = apply(gem_view, 1, function(x) google_link_generator(as.character(x['vcf_id']), as.character((x['gene']))) )
+gem_view$'Google Scholar' = apply(gem_view, 1, function(x) google_link_generator(as.character(x['hgvsc']), as.character((x['gene']))) )
 gem_view$gene = sapply(gem_view$gene, function(x) link_generator('https://www.omim.org/search/?search=', as.character(x)) )
 #gem_view$vcf_id = sapply(gem_view$vcf_id, function(x) link_generator('https://www.mutalyzer.nl/name-checker?description=',as.character(x)) )
 gem_view <- gem_view %>% 
