@@ -20,8 +20,6 @@ localrules: move_existing_vcf_to_temp, MVL_excel_sheet_query
 rule all:
 	input:
 		config['gemini_db_name'],
-		expand('temp/{sample}/annotated_variants', sample=NEW_SAMPLES),
-		expand('temp/{sample}/mvl_sheet_info', sample=NEW_SAMPLES),
 		expand('MGOG_reports/{sample}.report.html', sample=NEW_SAMPLES)
 		#'temp/ALL_SAMPLES.SORTED.vcf.gz'
 		#'{config[gemini_db_name]}',
