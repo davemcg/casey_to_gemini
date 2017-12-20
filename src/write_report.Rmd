@@ -71,12 +71,12 @@ for (i in mvl_noMatch$HGVS){
   mvlHGVS_gemROW <- rbind(mvlHGVS_gemROW, cbind(i, match))
 }
 
-for (i in mvlHGVS_gemROW[!is.na(mvlHGVS_gemROW$match),]$i){
-  if (!is.na(match) & (mvl_excel %>% filter(HGVS==i) %>% nrow)==1){
-    gem[i,'Priority'] <- mvl_excel %>% filter(HGVS==i) %>% pull(Priority)
-    gem[i,'HGVS'] <- mvl_excel %>% filter(HGVS==i) %>% pull(HGVS)
-    gem[i,'TimesObservedPerPanel'] <- mvl_excel %>% filter(HGVS==i) %>% pull(TimesObservedPerPanel)
-    gem[i,'TimesObservedPerPanelGroup'] <- mvl_excel %>% filter(HGVS==i) %>% pull(TimesObservedPerPanelGroup)
+for (hgvs in mvlHGVS_gemROW[!is.na(mvlHGVS_gemROW$match),]$i){
+  if (!is.na(match) & (mvl_excel %>% filter(HGVS==hgvs) %>% nrow)==1){
+    gem[mvlHGVS_gemROW %>% filter(i==hgvs) %>% pull(match) %>% as.character() %>% as.numeric(),'Priority'] <- mvl_excel %>% filter(HGVS==hgvs) %>% pull(Priority)
+    gem[mvlHGVS_gemROW %>% filter(i==hgvs) %>% pull(match) %>% as.character() %>% as.numeric(),'HGVS'] <- mvl_excel %>% filter(HGVS==hgvs) %>% pull(HGVS)
+    gem[mvlHGVS_gemROW %>% filter(i==hgvs) %>% pull(match) %>% as.character() %>% as.numeric(),'TimesObservedPerPanel'] <- mvl_excel %>% filter(HGVS==hgvs) %>% pull(TimesObservedPerPanel)
+    gem[mvlHGVS_gemROW %>% filter(i==hgvs) %>% pull(match) %>% as.character() %>% as.numeric(),'TimesObservedPerPanelGroup'] <- mvl_excel %>% filter(HGVS==hgvs) %>% pull(TimesObservedPerPanelGroup)
   }
 }
 
