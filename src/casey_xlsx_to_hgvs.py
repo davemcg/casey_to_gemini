@@ -45,7 +45,7 @@ group = []
 ref = []
 alt = []
 
-for row in range(header_row+1, last_row):
+for row in range(header_row, last_row):
 	hgvs_cell = "{}{}".format(HGVS_column, row)
 	hgvs_cell_value = ws[hgvs_cell].value
 	hgvs.append(hgvs_cell_value)
