@@ -9,7 +9,7 @@ parser.add_argument('xlsx_file', help = 'John Chiang / OSU / MVL / Casey patient
 
 args = parser.parse_args()
 # load workbook and read sheet names with openpyxl
-wb = load_workbook(args.xlsx_file)
+wb = load_workbook(args.xlsx_file, data_only=True)
 ws = wb[wb.get_sheet_names()[0]]
 # identify HGVS coding column
 for row in ws.iter_rows(min_row=2, max_row=20):
