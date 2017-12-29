@@ -21,9 +21,6 @@ rule all:
 	input:
 		config['gemini_db_name'],
 		expand('MGOG_reports/{sample}.report.html', sample=NEW_SAMPLES)
-		#'temp/ALL_SAMPLES.SORTED.vcf.gz'
-		#'{config[gemini_db_name]}',
-		#expand('MGOG_reports/{sample}_REPORT.html', sample=SAMPLES)
 
 
 rule vt_bgzip_and_tabix_MVL_vcf:
@@ -42,7 +39,7 @@ rule vt_bgzip_and_tabix_MVL_vcf:
 			| sed 's/ID=AD,Number=./ID=AD,Number=R/' \
 			| grep -v "##sgmutationstatistics" \
 			| ~/git/vt/./vt decompose -s - \
-			| ~/git/vt/./vt normalize -r {config[ref_genome]} - \
+			| ~/git/vt/./vt normalize -n -r {config[ref_genome]} - \
 			| bgzip -c > {output.vcf}
 		tabix -f -p vcf {output.vcf}
 		"""
@@ -105,7 +102,7 @@ rule vt_left_align_master_vcf:
 		cat {input.vcf} \
 			| sed 's/ID=AD,Number=./ID=AD,Number=R/' \
 			| ~/git/vt/./vt decompose -s - \
-			| ~/git/vt/./vt normalize -r {config[ref_genome]} - \
+			| ~/git/vt/./vt normalize -n -r {config[ref_genome]} - \
 			> {output}
 		"""
 
