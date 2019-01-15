@@ -27,19 +27,21 @@ rule vt_bgzip_and_tabix_MVL_vcf:
 	input:
 		'vcf/{sample}.vcf'
 	output:
-		vcf = temp('temp/{sample}.vcf.gz'),
-		index = temp('temp/{sample}.vcf.gz.tbi')
+		vcf = ('temp/{sample}.vcf.gz'),
+		index = ('temp/{sample}.vcf.gz.tbi')
 	shell:
 		"""
 		export REF_CACHE=/scratch/$SLURM_JOB_ID/
 		module load {config[samtools_version]}
+		module load {config[vt_version]}
 		# hack for now, replace M with MT
 		cat {input} \
 			| sed 's/^M/MT/g' - \
+			| grep -v ^MT \
 			| sed 's/ID=AD,Number=./ID=AD,Number=R/' \
-			| grep -v "##sgmutationstatistics" \
+			| grep -v "^##sg" \
 			| ~/git/vt/./vt decompose -s - \
-			| ~/git/vt/./vt normalize -n -r {config[ref_genome]} - \
+			| ~/git/vt/./vt normalize -m -r {config[ref_genome]} - \
 			| bgzip -c > {output.vcf}
 		tabix -f -p vcf {output.vcf}
 		"""
@@ -56,15 +58,15 @@ rule merge_all_vcfs:
 		"""
 		export REF_CACHE=/scratch/$SLURM_JOB_ID/
 		module load {config[samtools_version]}
-		bcftools merge {input.vcf_new} {input.vcf_existing} > {output}
+		bcftools merge -m id {input.vcf_new} {input.vcf_existing} > {output}
 		"""
 
 rule sort_bgzip_and_tabix_big_vcf:
 	input:
 		'temp/ALL_SAMPLES.vcf'
 	output:
-		vcf = temp('temp/ALL_SAMPLES.SORTED.vcf.gz'),
-		index = temp('temp/ALL_SAMPLES.SORTED.vcf.gz.tbi')
+		vcf = ('temp/ALL_SAMPLES.SORTED.vcf.gz'),
+		index = ('temp/ALL_SAMPLES.SORTED.vcf.gz.tbi')
 	shell:
 		"""
 		export REF_CACHE=/scratch/$SLURM_JOB_ID/
@@ -110,8 +112,8 @@ rule VEP_annotate:
 	input:
 		'temp/ALL_SAMPLES.SORTED.VT.vcf.gz'
 	output:
-		vcf = temp('temp/ALL_SAMPLES.SORTED.VT.VEP.vcf.gz'),
-		index = temp('temp/ALL_SAMPLES.SORTED.VT.VEP.vcf.gz.tbi')
+		vcf = ('temp/ALL_SAMPLES.SORTED.VT.VEP.vcf.gz'),
+		index = ('temp/ALL_SAMPLES.SORTED.VT.VEP.vcf.gz.tbi')
 	threads: 16
 	shell:
 		"""
@@ -137,7 +139,7 @@ rule VEP_annotate:
 			--pubmed \
 			--domains \
 			--gene_phenotype \
-			--pick \
+			--pick_allele_gene \
 			--pick_order canonical, tsl, biotype, ccds, length \
 			--fields Consequence,Codons,Amino_acids,Gene,SYMBOL,Feature,EXON,PolyPhen,SIFT,Protein_position,BIOTYPE,CANONICAL,DOMAINS,CLIN_SIG,Grantham,MaxEntScan,HGVSc,HGVSp,PUBMED,Phenotypes,CADD_RAW,CADD_PHRED \
 			--vcf --compress_output bgzip --force_overwrite --fork {threads}
@@ -150,8 +152,8 @@ rule vcfanno_annotate:
 		vcf = 'temp/ALL_SAMPLES.SORTED.VT.VEP.vcf.gz',
 		index = 'temp/ALL_SAMPLES.SORTED.VT.VEP.vcf.gz'
 	output:
-		vcf = temp('temp/ALL_SAMPLES.SORTED.VT.VEP.VCFANNO.vcf.gz'),
-		index = temp('temp/ALL_SAMPLES.SORTED.VT.VEP.VCFANNO.vcf.gz.tbi')
+		vcf = ('temp/ALL_SAMPLES.SORTED.VT.VEP.VCFANNO.vcf.gz'),
+		index = ('temp/ALL_SAMPLES.SORTED.VT.VEP.VCFANNO.vcf.gz.tbi')
 	threads: 16
 	shell:
 		"""
@@ -178,7 +180,7 @@ rule query_gemini:
 		db = config['gemini_db_name'],
 		input_vcf = 'vcf/{sample}.vcf'
 	output:
-		temp('temp/{sample}/annotated_variants')
+		('temp/{sample}/annotated_variants')
 	shell:
 		"""
 		export REF_CACHE=/scratch/$SLURM_JOB_ID/
@@ -192,10 +194,10 @@ rule MVL_excel_sheet_query:
 	input:
 		find_excel_sheet_match
 	output:
-		temp('temp/{sample}/mvl_sheet_info')
+		('temp/{sample}/mvl_sheet_info')
 	shell:
 		"""
-		/usr/local/Anaconda/envs/py3.4/bin/python3 /home/mcgaugheyd/git/casey_to_gemini/src/casey_xlsx_to_hgvs.py {input} > {output}
+		/usr/local/Anaconda/envs/py3.5/bin/python3 /home/mcgaugheyd/git/casey_to_gemini/src/casey_xlsx_to_hgvs.py {input} > {output}
 		"""
 
 rule write_report:
